@@ -47,7 +47,7 @@ void test_main(void)
 
     write(STDOUT_FILENO, "OK\n", 3);
 
-    // Reserve space for 1 parameter (open requires 2).
+    // Reserve space for 1 parameter (close requires 2).
     base = page - sizeof(int) * 1;
 
     // Call close() with space for 1 parameter (the kernel should kill us for doing this).

@@ -107,6 +107,9 @@ process_execute (const char *command_line)
   return process_id;
 }
 
+/* ASM version of the code to set up the main stack. */
+void *setup_main_stack_asm(const char *command_line, void *esp);
+
 /* A thread function that loads a user process and starts it
    running. */
 static void
@@ -143,13 +146,17 @@ start_process (struct parameters_to_start_process* parameters)
        allocated memory for a process stack. The stack top is in
        if_.esp, now we must prepare and place the arguments to main on
        the stack. */
-  
+
     /* A temporary solution is to modify the stack pointer to
        "pretend" the arguments are present on the stack. A normal
        C-function expects the stack to contain, in order, the return
        address, the first argument, the second argument etc. */
     
-    HACK if_.esp -= 12; /* Unacceptable solution. */
+    // if_.esp -= 12; /* this is a very rudimentary solution */
+
+    /* This uses a "reference" solution in assembler that you
+       can replace with C-code if you wish. */
+    if_.esp = setup_main_stack_asm(parameters->command_line, if_.esp);
 
     /* The stack and stack pointer should be setup correct just before
        the process start, so this is the place to dump stack content

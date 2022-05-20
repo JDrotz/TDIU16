@@ -31,7 +31,7 @@ void test_main(void)
     // Reserve space for 2 parameters.
     unsigned base = page - sizeof(int) * 2;
 
-    // Call close() with space for 2 parameters (should be fine).
+    // Call close() with space for 2 parameters (syscall number + parameter, should be fine).
     asm volatile (
         "movl %%esp, %%edi;"
         "movl %0, %%esp;"       // Set stack pointer to right below page boundary.
@@ -47,7 +47,7 @@ void test_main(void)
 
     write(STDOUT_FILENO, "OK\n", 3);
 
-    // Reserve space for 1 parameter (close requires 2).
+    // Reserve space for only syscall number (close requires an additional parameter).
     base = page - sizeof(int) * 1;
 
     // Call close() with space for 1 parameter (the kernel should kill us for doing this).

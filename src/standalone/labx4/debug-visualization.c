@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <string.h>
 
-int main()
+int main(void)
 {
-  char str[] = "sihtgubed";
+  char *str = strdup("sihtgubed");
   char *stri = &str[8];
   char *buf[9];
   char **bufi;
@@ -22,7 +23,11 @@ int main()
   }
   
   while (bufi != bufend){
-    printf("%c", **bufi);
+    putchar(**bufi);
     bufi++;
   }
+
+  putchar('\n');
+
+  return 0;
 }

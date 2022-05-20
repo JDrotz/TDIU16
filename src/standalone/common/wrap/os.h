@@ -1,8 +1,5 @@
 #pragma once
 
-// Ignore NO_STEP if it is present somewhere.
-#define NO_STEP
-
 /**
  * OS specific types. Contains definitions for Win32 and POSIX systems.
  */
@@ -23,9 +20,7 @@
 #ifdef POSIX
 
 // Define more things in the system headers.
-#ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 20000101L
-#endif
 
 #include <stdbool.h>
 #include <pthread.h>

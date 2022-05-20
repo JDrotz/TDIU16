@@ -12,3 +12,6 @@ void timer_msleep(unsigned milliseconds);
 
 // Some macro magic to avoid type errors with "thread_new".
 #define thread_new(fn, aux) thread_create("", 0, (thread_func *)(fn), aux)
+
+// Special syntax in Progvis.
+#define NO_STEP

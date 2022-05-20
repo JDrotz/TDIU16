@@ -6,10 +6,6 @@
 #include <stdio.h>
 #include <time.h>
 
-tid_t thread_new(thread_func *fn, void *aux) {
-    return thread_create("", 0, fn, aux);
-}
-
 struct thread_start {
     thread_func *run;
     void *aux;

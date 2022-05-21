@@ -6,7 +6,7 @@
 #include "tests/main.h"
 
 /**
- * Thanks to Herman Appelgren for finding this case.
+ * Thanks to Herman Appelgren for suggesting this test case.
  */
 
 /**

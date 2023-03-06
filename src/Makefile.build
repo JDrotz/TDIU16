@@ -60,6 +60,7 @@ userprog_SRC += userprog/tss.c		# TSS management.
 userprog_SRC += userprog/flist.c	# Open file list.
 userprog_SRC += userprog/plist.c	# Process list.
 userprog_SRC += userprog/main-stack.S   # Main stack setup.
+userprog_SRC += userprog/slowdown.c     # Slowdown of syscalls for debugging.
 
 # No virtual memory code yet.
 #vm_SRC = vm/file.c			# Some file.

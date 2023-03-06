@@ -193,6 +193,25 @@ intr_register_int (uint8_t vec_no, int dpl, enum intr_level level,
   register_handler (vec_no, dpl, level, handler, name);
 }
 
+/* Clear registration for VEC_NO to re-register it later. */
+void
+intr_clear_int (uint8_t vec_no)
+{
+  ASSERT (vec_no < 0x20 || vec_no > 0x2f);
+  intr_handlers[vec_no] = NULL;
+}
+
+/* Bypass an already existing registration. */
+intr_handler_func *
+intr_bypass_int (uint8_t vec_no, intr_handler_func *handler)
+{
+  ASSERT (vec_no < 0x20 || vec_no > 0x2f);
+  ASSERT (intr_handlers[vec_no]);
+  intr_handler_func *old = intr_handlers[vec_no];
+  intr_handlers[vec_no] = handler;
+  return old;
+}
+
 /* Returns true during processing of an external interrupt
    and false at all other times. */
 bool
@@ -382,8 +401,8 @@ intr_handler (struct intr_frame *frame)
       in_external_intr = false;
       pic_end_of_interrupt (frame->vec_no); 
 
-      if (yield_on_return) 
-        thread_yield (); 
+      if (yield_on_return)
+        thread_yield ();
     }
 }
 

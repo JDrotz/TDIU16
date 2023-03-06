@@ -1,6 +1,6 @@
 /* klaar@ida (cleanup of previous code by various IDA-employees)
    
-   pintos -v -k -T 120 --fs-disk=2 --qemu -p ../examples/pfs -a pfs -p ../examples/pfs_writer -a pfs_writer -p ../examples/pfs_reader -a pfs_reader -g messages -- -F=20000 -f -q run pfs
+   pintos -v -k -T 240 --fs-disk=2 --qemu -p ../examples/pfs -a pfs -p ../examples/pfs_writer -a pfs_writer -p ../examples/pfs_reader -a pfs_reader -g messages -- -S -F=10000 -f -q run pfs
    
    Tests that read and write are properly synchronized. Also stresses
    the filesystem somewhat.

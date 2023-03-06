@@ -27,6 +27,7 @@ switch_threads:
 	pushl %ebp
 	pushl %esi
 	pushl %edi
+	pushfl
 
 	# Get offsetof (struct thread, stack).
 .globl thread_stack_ofs
@@ -40,7 +41,17 @@ switch_threads:
 	movl SWITCH_NEXT(%esp), %ecx
 	movl (%ecx,%edx,1), %esp
 
+	# Copy parts of the current flags over to the old state. Only
+	# preserve the state of the 0x0100 bit. This is likely overkill.
+	pushfl
+	popl %edi
+	andl $0xFFFFFEFF, %edi
+	popl %esi
+	orl %esi, %edi
+	pushl %edi
+
 	# Restore caller's register state.
+	popfl
 	popl %edi
 	popl %esi
 	popl %ebp

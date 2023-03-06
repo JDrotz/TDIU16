@@ -26,6 +26,7 @@
 #include "userprog/gdt.h"
 #include "userprog/syscall.h"
 #include "userprog/tss.h"
+#include "userprog/slowdown.h"
 #else
 #include "tests/threads/tests.h"
 #endif
@@ -57,6 +58,8 @@ bool force_off_when_done = false;
 static uint16_t init_timer_freq = 1000;
 /* -tcf: Simulate failure in thread_create */
 int thread_create_limit = 0; /* infinite */
+/* -S: Execute kernel threads slowly */
+static bool slow_kernel_threads = false;
 
 static bool prevent_recursive_off = false;
 
@@ -118,6 +121,9 @@ main (void)
 #ifdef USERPROG
   exception_init ();
   syscall_init ();
+  if (slow_kernel_threads) {
+    slowdown_init ();
+  }
 #endif
 
   /* Start thread scheduler and enable interrupts. */
@@ -257,6 +263,8 @@ parse_options (char **argv)
         power_off_when_done = force_off_when_done = true;
       else if (!strcmp (name, "-F")) // klaar@ida
         init_timer_freq = atoi (value);
+      else if (!strcmp (name, "-S")) // filst@ida
+        slow_kernel_threads = true;
 #ifdef FILESYS
       else if (!strcmp (name, "-f"))
         format_filesys = true;

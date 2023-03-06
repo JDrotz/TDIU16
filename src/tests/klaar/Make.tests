@@ -34,5 +34,5 @@ $(foreach prog,$(tests/klaar_PROGS),$(eval $(prog)_SRC += tests/lib.c))
 
 tests/klaar/low-mem.output: KERNELFLAGS = -tcl=3
 
-tests/klaar/pfs.output: TIMEOUT = 180
-tests/klaar/pfs.output: KERNELFLAGS = -F=20000
+tests/klaar/pfs.output: TIMEOUT = 240
+tests/klaar/pfs.output: KERNELFLAGS = -S

@@ -792,6 +792,7 @@ sub xsystem {
 	    # Filter output.
 	    my ($buf) = "";
 	    my ($boots) = 0;
+	    my ($firstline) = 1;
 	    local ($|) = 1;
 	    for (;;) {
 		if (waitpid ($pid, WNOHANG) != 0) {
@@ -807,11 +808,17 @@ sub xsystem {
 		my ($readcount) = sysread ($in, $buf, 4096, $len);
 		waitpid ($pid, 0), last
 		    if $readcount <= 0;
-		print substr ($buf, $len);
+		print substr ($buf, $len) if !$firstline;
 
 		# Remove full lines from $buf and scan them for keywords.
 		while ((my $idx = index ($buf, "\n")) >= 0) {
 		    local $_ = substr ($buf, 0, $idx + 1, '');
+		    if ($firstline) {
+			# SeaBIOS has a number of escape sequences here, remove them before printing the first line.
+			$_ =~ s/^.*SeaBIOS/SeaBIOS/g;
+			print;
+		    }
+		    $firstline = 0;
 		    next if defined ($cause);
 		    if (/(Kernel PANIC|User process ABORT)/ ) {
 			$cause = "\L$1\E";

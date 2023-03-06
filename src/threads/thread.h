@@ -137,10 +137,10 @@ void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
-void DEBUG_thread_init(void);
-void DEBUG_thread_count_up(void);
-void DEBUG_thread_count_down(void);
-void DEBUG_thread_poweroff_check(bool force_off);
-bool DEBUG_thread_create_simulate_fail(void);
+void DEBUG_thread_init (void);
+void DEBUG_thread_count_up (void);
+void DEBUG_thread_count_down (void);
+void DEBUG_thread_poweroff_check (bool force_off);
+bool DEBUG_thread_create_simulate_fail (void);
 
 #endif /* threads/thread.h */

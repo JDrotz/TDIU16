@@ -58,7 +58,7 @@ static uint16_t init_timer_freq = 1000;
 /* -tcf: Simulate failure in thread_create */
 int thread_create_limit = 0; /* infinite */
 
-static bool prevent_reqursive_off = false;
+static bool prevent_recursive_off = false;
 
 static void hard_power_off (void) NO_RETURN;
 
@@ -433,10 +433,10 @@ hard_power_off (void)
 void
 power_off (void) 
 {
-  if ( prevent_reqursive_off )
+  if ( prevent_recursive_off )
     hard_power_off ();
     
-  prevent_reqursive_off = true;
+  prevent_recursive_off = true;
 
   printf ("# Preparing to power off...\n");
   DEBUG_thread_poweroff_check( force_off_when_done );

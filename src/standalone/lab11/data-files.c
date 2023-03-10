@@ -54,6 +54,14 @@ struct data_file *data_open(int file) {
   return result;
 }
 
+// Öppna en datafil som redan är öppen, så att den kan ges vidare till en annan
+// del av systemet som kör close senare.
+void data_reopen(struct data_file *file) {
+  lock_acquire(&file->llock);
+  file->open_count++;
+  lock_release(&file->llock);
+}
+
 // Stäng en datafil. Om ingen annan har filen öppen ska filen avallokeras för
 // att spara minne.
 void data_close(struct data_file *file) {
@@ -80,6 +88,9 @@ struct semaphore data_sema;
 
 void thread_main(int *file_id) {
   struct data_file *f = data_open(*file_id);
+  data_reopen(f);
+  printf("Data: %s\n", f->data);
+  data_close(f);
   printf("Data: %s\n", f->data);
   data_close(f);
   sema_up(&data_sema);

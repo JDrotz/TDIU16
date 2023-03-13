@@ -108,7 +108,7 @@ timer_sleep (int64_t ticks)
 
   ASSERT (intr_get_level () == INTR_ON);
   while (timer_elapsed (start) < ticks)
-    thread_yield (); /* BUSY WAIT. Unacceptable. For you to fix. */
+    thread_yield ();
 }
 
 /* Suspends execution for approximately MS milliseconds. */

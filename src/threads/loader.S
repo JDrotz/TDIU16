@@ -3,7 +3,7 @@
    below. */
 
 /*
- * Copyright (C) 1997 Massachusetts Institute of Technology 
+ * Copyright (C) 1997 Massachusetts Institute of Technology
  *
  * This software is being provided by the copyright holders under the
  * following license. By obtaining, using and/or copying this software,
@@ -188,7 +188,7 @@ start:
 #    WP (Write Protect): if unset, ring 0 code ignores
 #       write-protect bits in page tables (!).
 #    EM (Emulation): forces floating-point instructions to trap.
-#       We don't support floating point. 
+#       We don't support floating point.
 	
 	movl %cr0, %eax
 	orl $CR0_PE | CR0_PG | CR0_WP | CR0_EM, %eax

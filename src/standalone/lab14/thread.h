@@ -9,7 +9,7 @@ struct thread
 
 /* Initiate the threading system. */
 void thread_init();
-  
+
 /* Return a pointer to the currently active thread. */
 struct thread* thread_current();
 

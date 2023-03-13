@@ -41,11 +41,11 @@ int main (int argc, char *argv[])
    /* this tries to use the buffer (it should fail verification) */
    count = read(fd, &global, (l - g + 1));
    printf("read %i out of %u bytes\n", count, (l - g + 1));
-   
+
    /* this tries to use a buffer probably ending before the stack */
    count = read(fd, &global, (l - g + 1) - 4096);
    printf("read %i out of %u bytes\n", count, (l - g + 1) - 4096);
-   
+
    close(fd);
 
    return 0;

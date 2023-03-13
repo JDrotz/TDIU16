@@ -22,6 +22,6 @@ main (void)
   {
     write (STDOUT_FILENO, msg[i], strlen(msg[i]));
   }
-  
+
   return 0;
 }

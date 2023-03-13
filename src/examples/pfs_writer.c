@@ -22,20 +22,20 @@ int main(int argc, char* argv[])
 
   if (argc != 3 || strlen(argv[1]) != 1 || strlen(argv[2]) != 1)
     exit(1);
-  
+
   start = argv[1][0];
   end   = argv[2][0];
-  
+
   for (i = 0; i < TIMES / (end - start + 1) + 1; ++i)
   {
     for (c = start; c <= end; ++c)
     {
       for (j = 0; j < BIG; j++)
         buffer[j] = c;
-      
+
       id = open("file.1");
       write_count = write(id, buffer, BIG);
-      
+
       if ( write_count != BIG )
       {
         printf("TEST ERROR: write() wrote only %d bytes out of %d bytes\n",

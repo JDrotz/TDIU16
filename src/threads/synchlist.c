@@ -9,7 +9,7 @@
 // 	synchronization.
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 //
 // modified by Vlad Jahundovics for Pintos (translation from C++ to C)
@@ -21,7 +21,7 @@
 
 //----------------------------------------------------------------------
 // SynchList::SynchList
-//	Initialize the data structures needed for a 
+//	Initialize the data structures needed for a
 //	synchronized list, empty to start with.
 //	Elements can now be added to the list.
 //----------------------------------------------------------------------
@@ -56,18 +56,18 @@ void sl_destroy(struct SynchList *sl)
 //      Append an "item" to the end of the list.  Wake up anyone
 //	waiting for an element to be appended.
 //
-//	"item" is the thing to put on the list, it can be a pointer to 
+//	"item" is the thing to put on the list, it can be a pointer to
 //		anything.
 //----------------------------------------------------------------------
 
 void sl_append(struct SynchList *sl, void *item)
 {
-  lock_acquire(&sl->sl_lock);                // enforce mutual exclusive access to the list 
+  lock_acquire(&sl->sl_lock);                // enforce mutual exclusive access to the list
   struct SL_element *sl_elem = malloc(sizeof(struct SL_element));
   sl_elem->item = item;
   list_push_back(&sl->sl_list, &sl_elem->elem);
   cond_signal(&sl->sl_empty,&sl->sl_lock);  // wake up a waiter, if any
-  lock_release(&sl->sl_lock);              
+  lock_release(&sl->sl_lock);
   return;
 }
 
@@ -77,7 +77,7 @@ void sl_append(struct SynchList *sl, void *item)
 //      Remove an "item" from the beginning of the list.  Wait if
 //	the list is empty.
 // Returns:
-//	The removed item. 
+//	The removed item.
 //----------------------------------------------------------------------
 
 void *sl_remove(struct SynchList *sl)

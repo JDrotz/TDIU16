@@ -1,11 +1,11 @@
 /* klaar@ida
- 
+
    pintos -v --fs-disk=2 -p ../examples/crack -a crack -p ../examples/shellcode -a shellcode -- -f -q run 'shellcode'
-   
+
    -*- Woahhh, have fun -*-
    http://www.phrack.org/issues.html?issue=49&id=14#article
    http://www.phrack.org/issues.html?issue=57&id=15#article
- 
+
    Somewhat simpler to achieve in Pintos actually.
  */
 
@@ -39,7 +39,7 @@ int main( void )
 {
 #if 1
   int *ret; /* A local variable is stored on the stack. */
-  
+
   ret = (int *)&ret + 2;   /* Two steps above in the stack is the
                             * address to continue at when main
                             * return... the normal function return
@@ -64,7 +64,7 @@ int main( void )
    * program to start is stored. The call instruction solves it
    * nicely. It saves the following address as return address.
    */
-  
+
   __asm__("jmp    0x0f;"             /* jump to CALL */
 /* actual address of string pushed as return address by CALL */
           "push   $0x2;"             /* push EXEC syscall number */

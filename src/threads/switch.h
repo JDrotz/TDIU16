@@ -3,7 +3,7 @@
 
 #ifndef __ASSEMBLER__
 /* switch_thread()'s stack frame. */
-struct switch_threads_frame 
+struct switch_threads_frame
   {
     uint32_t eflags;            /*  0: Saved %eflags. */
     uint32_t edi;               /*  4: Saved %edi. */

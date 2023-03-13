@@ -21,14 +21,14 @@ static void fill_buffer(char* buf, int size, char c)
 
 char buffer[BIG];
 
-int main (int argc, char *argv[]) 
+int main (int argc, char *argv[])
 {
   test_name = argv[0];
   quiet = true;
 
   if (argc != 3 || strlen(argv[1]) != 1 || strlen(argv[2]) != 1)
     return 1;
-  
+
   char start = argv[1][0];
   char end   = argv[2][0];
 
@@ -36,15 +36,15 @@ int main (int argc, char *argv[])
   for (int i = 0; i < TIMES; ++i)
   {
     fill_buffer(buffer, BIG, c);
-    
+
     int id = open ("file.1");
-    CHECK ( id > 1, "open \"file.1\"");    
+    CHECK ( id > 1, "open \"file.1\"");
     int bytes = write(id, buffer, BIG);
     CHECK ( bytes == BIG, "write \"file.1\"");
     close(id);
 
     c = c + 1;
-    
+
     if ( c > end )
       c = start;
   }

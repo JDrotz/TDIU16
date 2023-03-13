@@ -4,14 +4,14 @@
 
    Start a lot of processes and let them finish to test if we
    eventually run out of process slots.
-   
+
    To run the test effectively, if you have a limit on number of
    processes, lower the limit to 5 processes and run this test like
- 
+
     'longrun 5 400'
- 
+
    It will fill (and if it works empty) your process table 400 times :-)
- 
+
    Note that some pintos tests requires at least 16 simultaneous
    processes to work, so be sure to increase the limit before running
    pintos tests.
@@ -52,17 +52,17 @@ int main(int argc, char* argv[])
            "simultaneos processes.\n", MAX_SIMULTANEOUS);
     return -1;
   }
-  
+
   if (repeat > MAX_REPEAT)
   {
     printf("This test program is compiled with a limitation to max %d \n"
            "repetitions.\n", MAX_REPEAT);
     return -1;
   }
-  
+
   printf("Will try to start a total of %d processes in groups of %d\n",
          simul * repeat, simul);
-  
+
   for (j = 0; j < repeat; ++j)
   {
     for (i = 0; i < simul; ++i)
@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
       snprintf(cmd, 15, "dummy %i", j * simul + i);
       pid[i] = exec(cmd);
     }
-    
+
     /* There will never be more than 'simul' processes running
      * simultaneously, but in total there will be a lot of processes
      * (repeat * simul). Just as you can expect in a real system.
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
         printf("ERROR: Aborting test. Some execution(s) failed\n");
         return j+1;
       }
-      wait(pid[i]);      
+      wait(pid[i]);
     }
   }
   return 0;

@@ -11,11 +11,11 @@
 char global; /* allocated with process image */
 
 void
-test_main (void) 
+test_main (void)
 {
   int handle;
   char local; /* allocated on process stack */
-  
+
   CHECK ((handle = open ("sample.txt")) > 1, "open \"sample.txt\"");
 
   /* buffer will start and end at valid addresses ... */

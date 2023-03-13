@@ -1,7 +1,7 @@
 /* klaar@ida
-  
+
    noopsled | pintos --fs-disk=2 -v -k -p ../examples/overflow -a overflow -p ../examples/crack -a crack -- -f -q run overflow
-  
+
    This program is possible to crack with carefully crafted input.
    It examplifies the danger of buffer overflow.
 */
@@ -37,16 +37,16 @@ static int getline (char* destination)
   printf ("Main function address : 0x%08x\n", (unsigned)main);
   printf ("Line buffer address   : 0x%08x\n", (unsigned)line);
 #endif
-  
+
   do /* !!! Buffer overflow when i >= 200 !!! */
   {
     if ( read (STDIN_FILENO, &line[i], 1) != 1)
       break; /* failed to read requested number of characters */
   }
   while ( line[i++] != '\n' );
-  
+
   line[i-1] = '\0';
-  
+
 #ifdef DEBUG_CODE
   /* hex dump of read data */
   for (r = 0; r < 16; ++r)
@@ -59,7 +59,7 @@ static int getline (char* destination)
     }
     printf("\n");
   }
-        
+
   printf ("Return address content: 0x%08x\n", *ret);
 #endif
 
@@ -75,7 +75,7 @@ int main (void)
   char msg[2000];
   char quote = '"';
   char endl = '\n';
-  
+
   while ( getline (msg) )
   {
     write (STDOUT_FILENO, &quote, 1);
@@ -83,6 +83,6 @@ int main (void)
     write (STDOUT_FILENO, &quote, 1);
     write (STDOUT_FILENO, &endl, 1);
   }
-  
+
   return 0;
 }

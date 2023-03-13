@@ -86,7 +86,7 @@ static bool load_segment (struct file *file, off_t ofs, uint8_t *upage, uint32_t
    and its initial stack pointer into *ESP.
    Returns true if successful, false otherwise. */
 bool
-load (const char *file_name, void (**eip) (void), void **esp) 
+load (const char *file_name, void (**eip) (void), void **esp)
 {
   struct thread *t = thread_current ();
   struct Elf32_Ehdr ehdr;
@@ -97,7 +97,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
 
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
-  if (t->pagedir == NULL) 
+  if (t->pagedir == NULL)
     goto done;
   process_activate ();
 
@@ -108,10 +108,10 @@ load (const char *file_name, void (**eip) (void), void **esp)
 
   /* Open executable file. */
   file = filesys_open (file_name);
-  if (file == NULL) 
+  if (file == NULL)
     {
       printf ("load: %s: open failed\n", file_name);
-      goto done; 
+      goto done;
     }
 
   /* Read and verify executable header. */
@@ -121,15 +121,15 @@ load (const char *file_name, void (**eip) (void), void **esp)
       || ehdr.e_machine != 3
       || ehdr.e_version != 1
       || ehdr.e_phentsize != sizeof (struct Elf32_Phdr)
-      || ehdr.e_phnum > 1024) 
+      || ehdr.e_phnum > 1024)
     {
       printf ("load: %s: error loading executable\n", file_name);
-      goto done; 
+      goto done;
     }
 
   /* Read program headers. */
   file_ofs = ehdr.e_phoff;
-  for (i = 0; i < ehdr.e_phnum; i++) 
+  for (i = 0; i < ehdr.e_phnum; i++)
     {
       struct Elf32_Phdr phdr;
 
@@ -140,7 +140,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
       if (file_read (file, &phdr, sizeof phdr) != sizeof phdr)
         goto done;
       file_ofs += sizeof phdr;
-      switch (phdr.p_type) 
+      switch (phdr.p_type)
         {
         case PT_NULL:
         case PT_NOTE:
@@ -154,7 +154,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
         case PT_SHLIB:
           goto done;
         case PT_LOAD:
-          if (validate_segment (&phdr, file)) 
+          if (validate_segment (&phdr, file))
             {
               bool writable = (phdr.p_flags & PF_W) != 0;
 			  uint32_t file_offset = phdr.p_offset;
@@ -204,24 +204,24 @@ static bool install_page (void *upage, void *kpage, bool writable);
 /* Checks whether PHDR describes a valid, loadable segment in
    FILE and returns true if so, false otherwise. */
 static bool
-validate_segment (const struct Elf32_Phdr *phdr, struct file *file) 
+validate_segment (const struct Elf32_Phdr *phdr, struct file *file)
 {
   /* p_offset and p_vaddr must have the same page offset. */
-  if ((phdr->p_offset & PGMASK) != (phdr->p_vaddr & PGMASK)) 
-    return false; 
+  if ((phdr->p_offset & PGMASK) != (phdr->p_vaddr & PGMASK))
+    return false;
 
   /* p_offset must point within FILE. */
-  if (phdr->p_offset > (Elf32_Off) file_length (file)) 
+  if (phdr->p_offset > (Elf32_Off) file_length (file))
     return false;
 
   /* p_memsz must be at least as big as p_filesz. */
-  if (phdr->p_memsz < phdr->p_filesz) 
-    return false; 
+  if (phdr->p_memsz < phdr->p_filesz)
+    return false;
 
   /* The segment must not be empty. */
   if (phdr->p_memsz == 0)
     return false;
-  
+
   /* The virtual memory region must both start and end within the
      user address space range. */
   if (!is_user_vaddr ((void *) phdr->p_vaddr))
@@ -323,13 +323,13 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage, uint32_t page_offset
 /* Create a minimal stack by mapping a zeroed page at the top of
    user virtual memory. */
 static bool
-setup_stack (void **esp) 
+setup_stack (void **esp)
 {
   uint8_t *kpage;
   bool success = false;
 
   kpage = palloc_get_page (PAL_USER | PAL_ZERO);
-  if (kpage != NULL) 
+  if (kpage != NULL)
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
       if (success)
@@ -368,26 +368,26 @@ void dump_stack(void* ptr, int size)
   unsigned from = (unsigned)ptr;
   unsigned to = (unsigned)(ptr - size);
   unsigned adr;
-  
+
   printf("# Adress  \thex-data \tchar-data\n");
-  
+
   for ( adr = from; adr > to; --adr )
   {
     unsigned* uadr = (unsigned*)( adr );
     unsigned char* byte = (unsigned char*)( adr );
 
     printf("# %08x\t", adr); /* address */
-      
+
     if ( (adr % 4) == 0 )
       printf("%08x\t", *uadr); /* content interpreted as address */
     else
       printf("        \t"); /* fill */
-        
+
     if ( *byte >= 32 && *byte < 127 )
       printf("%c\n", *byte); /* content interpreted as character */
     else
       printf("\\0%o\n", *byte); /* octal character code */
-    
+
     if ( adr == (unsigned)PHYS_BASE )
       printf("# -- ^ KERNEL SPACE ABOVE ^v USER SPACE BELOW v --\n");
     else if ( (adr % 4) == 0 )

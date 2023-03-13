@@ -29,11 +29,11 @@ int main(int argc, char* argv[])
      printf("Returns S + N on success, S + I if only I children could be started.\n");
      return -1;
   }
-  
+
   child = argv[1];
   start = atoi(argv[2]);
   count = atoi(argv[3]);
-  
+
   for(i = 0; i < count; i++)
   {
      snprintf(cmd, BUF_SIZE, "%s %i", child, start + i);

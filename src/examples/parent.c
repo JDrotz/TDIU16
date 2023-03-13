@@ -5,7 +5,7 @@
    grep -c 'Lab 1' result.txt
    grep -c 'Lab 2' result.txt
    grep -c 'Lab 3' result.txt
-   
+
    A test program that calls itself recursively. In the last step of
    the recursion child.c is started. Do not use with large values for
    CHILDREN or DEPTH.
@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 
   if (argc == 2)
     depth = atoi(argv[1]) - 1;
-  
+
   for(i = 0; i < CHILDREN; i++)
   {
     if (depth)

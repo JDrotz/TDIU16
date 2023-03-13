@@ -1,12 +1,12 @@
-// threadtest.c 
+// threadtest.c
 //	Simple test case for the threads assignment.
 //
 //	Create seven threads, and have them context switch
-//	back and forth between themselves by calling Thread::Yield, 
+//	back and forth between themselves by calling Thread::Yield,
 //	to illustrate the inner workings of the thread system.
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 //
 // Modified by Levon Saldamli.
@@ -81,7 +81,7 @@ void WaitForStart(void);
 void Producer(void *index);
 void Consumer(void *index);
 
-void data_init(struct Data *data, char ch, char* s, int i) 
+void data_init(struct Data *data, char ch, char* s, int i)
 {
   data->c = ch;
   data->sender = s;
@@ -148,12 +148,12 @@ Consumer(void *index)
     lock_release(&readlock[buf]);
 
     if (data->c != 0);
-      /*      DEBUG('c', "%s received from %s: %c\n", 
-	    currentThread->getName(), 
+      /*      DEBUG('c', "%s received from %s: %c\n",
+	    currentThread->getName(),
 	    data->sender,
 	    data->c);*/
     else
-      printf("\n%s: %s's total message was: \n\"%s\"\n", 
+      printf("\n%s: %s's total message was: \n\"%s\"\n",
 	     thread_name(),
 	     data->sender,
 	     received_msg_array[i]);

@@ -5,7 +5,7 @@
 #include "map.h"
 
 /* Recommended compile commmand:
- * 
+ *
  * gcc -Wall -Wextra -std=gnu99 -pedantic -g main.c map.c
  *
  * Recommended way to test your solution:
@@ -54,7 +54,7 @@ char* my_strdup(char* str)
   char* dst = (char*)malloc(len);
   /*! copy all characters in src to dst */
   strncpy(dst, str, len);
-  
+
   return dst; /*(!) return our deep copy of str */
 }
 
@@ -75,7 +75,7 @@ int main()
     /* insecure, scanf may overflow the input buffer array *
      * very serious, but we ignore it in this test program */
     scanf("%s", input_buffer);
-    
+
     /*! allocates a copy of the input and inserts in map */
     obj = my_strdup(input_buffer);
     id = map_insert(&container, obj);
@@ -92,7 +92,7 @@ int main()
 
     /*! if it was found, display it */
 YOUR CODE
-  
+
     /* since we leave the value in the map we may use it again and
      * should not free the memory */
   }
@@ -102,7 +102,7 @@ YOUR CODE
   {
     printf("Enter id to remove value for: ");
     scanf("%d", &id);
-    
+
     /*! find and remove a value for a key in the map */
     obj = map_remove(&container, id);
 
@@ -116,9 +116,9 @@ YOUR CODE
   printf("Will now display all values less than N. Choose N: ");
   scanf("%d", &i);
   map_for_each(&container, print_less, i);
-  
+
   /*! free all remaining memory and remove from map */
   map_remove_if(&container, do_free, 0);
-  
+
   return 0;
 }

@@ -10,18 +10,18 @@ int main(void)
   char **bufend;
   bufi = buf;
   bufend = &buf[9];
-  
+
   while (bufi != bufend){
     *bufi = stri;
     bufi++;
     stri--;
   }
-  
+
   while (bufi != buf){
     *(*bufi) -= 32;
     bufi--;
   }
-  
+
   while (bufi != bufend){
     putchar(**bufi);
     bufi++;

@@ -3,7 +3,7 @@
 
 
 /* Place functions to handle a running process here (process list).
-   
+
    plist.h : Your function declarations and documentation.
    plist.c : Your implementation.
 
@@ -23,10 +23,10 @@
      from the list. Should only remove the information when no process
      or thread need it anymore, but must guarantee it is always
      removed EVENTUALLY.
-     
+
    - A function that print the entire content of the list in a nice,
      clean, readable format.
-     
+
  */
 
 

@@ -1,10 +1,10 @@
 /* klaar@ida
-   
+
    pintos -v -k -T 180 --fs-disk=2 --qemu -p ../examples/create_file -a create_file -p ../examples/create_remove_file -a cr_rm_file -p ../examples/dir_stress -a dir_stress -- -f -q run dir_stress
-   
+
 */
 
-#include <stdio.h>  
+#include <stdio.h>
 #include <syscall.h>
 
 #define CREATORS  20   /* no of procs to concurrently create files */
@@ -33,7 +33,7 @@ int main(void)
     int success_count = 0;
     int crash_count = 0;
     int fail_count = 0;
-    
+
     /* set up processes to simultaneously create same file */
     for (i = 0; i < CREATORS; ++i)
     {
@@ -52,7 +52,7 @@ int main(void)
       crash_count += (r == -1);
       fail_count += (r == 1);
     }
-  
+
     remove("go");
 
     /* clean up the created file */
@@ -79,7 +79,7 @@ int main(void)
       exit_status = -1;
     }
   }
-  
+
   for (i = 0; i < LOADERS; ++i)
   {
     int result = wait( loader_pid[i] );
@@ -88,8 +88,8 @@ int main(void)
       printf("ERROR: loader %d finished with code %d\n",
              loader_pid[i], result);
       exit_status = -1;
-    }      
+    }
   }
-  
+
   return exit_status;
 }

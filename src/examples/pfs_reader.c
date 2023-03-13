@@ -1,5 +1,5 @@
 /* Part of pfs.c suite.
-   
+
    Reads from the file and checks consistency.
    The buffer should all contain the same character!!
  */
@@ -14,15 +14,15 @@ int main(void)
 {
   int bytes, i, j, inconsistency;
   int id, messages;
-  
+
   messages = open("messages");
-  
+
   for (i = 0; i < TIMES; ++i)
   {
     id = open("file.1");
     bytes = read(id, buffer, BIG);
     close(id);
-    
+
     if (bytes != BIG)
     {
       write(messages, "Buffer not filled!\n", 19);

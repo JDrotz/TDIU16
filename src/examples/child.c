@@ -11,10 +11,10 @@
 int main (int argc, char* argv[])
 {
   int i;
-  
+
   if (argc != 2)
     return 0;
-  
+
   for(i = 0; i < 20000; i++)
   {
     int a = (i * i) + (i * i);

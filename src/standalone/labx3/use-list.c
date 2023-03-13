@@ -3,7 +3,7 @@
 #include <stdarg.h>
 
 /* Pintos contain an implementation of a doubly linked list. It is
- * found in ../../lib/kernel/list.[ch]. 
+ * found in ../../lib/kernel/list.[ch].
  *
  * Recommended compilation commands:
  *
@@ -27,7 +27,7 @@ int main()
   {
     /* insert the value of the loop variable 'i' in the list */
   }
-  
+
   for (i = 2; i < N; ++i)
   {
     for (j = i*2; j < N; j += i)
@@ -35,7 +35,7 @@ int main()
       /* remove every with 'j' even divisible number from the list */
     }
   }
-  
+
   /* print all remaining numbers in the list and free any memory
    * allocated */
   return 0;

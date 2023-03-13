@@ -10,11 +10,11 @@
   and calculations are expressed with a questionmark (?). The
   assignment is mostly about doing the correct math. To do that math
   you will need to learn or understand:
-  
+
   - How the stack is used during program execution
   - How the stack is expected to look like at start of a C-program
   - What a pointer variable is, how it is used
-  - How a C-array (pointer to many) is laid-out in memory 
+  - How a C-array (pointer to many) is laid-out in memory
   - How pointer arithmetic behaves
   - How to cast from one pointer type to another
   - How to use printf to print good debug information
@@ -28,12 +28,12 @@
   man -s3 strtok_r
 
   The prototype for above functions:
-  
+
   int printf(const char *restrict format, ...);
   size_t strlen(const char *s);
   size_t strncpy(char *dst, const char *src, size_t dstsize);
   char *strtok_r(char *s1, const char *s2, char **lasts);
-  
+
   The above functions exist in Pintos code. Note the Pintos use
   'strlcpy' instead of 'strncpy'. If 'dst' is large enough they behave
   identical. You can find Pintos implementations in
@@ -45,9 +45,9 @@
 
 
   Recommended compile command:
-  
+
   gcc -m32 -Wall -Wextra -std=gnu99 -g setup-argv.c
-  
+
 */
 #error Read comments above, then remove this line.
 
@@ -84,7 +84,7 @@ struct main_args
 
   /* Just a normal integer. */
   int argc;
-  
+
   /* Variable "argv" that stores address to an address storing char.
    * That is: argv is a pointer to char*
    */
@@ -98,27 +98,27 @@ void dump(void* ptr, int size)
 {
   int i;
   const int S = sizeof(void*);
-  
+
   printf("%2$-*1$s \t%3$-*1$s \t%4$-*1$s\n", S*2, "Address", "hex-data", "char-data");
-  
+
   for (i = size - 1; i >= 0; --i)
   {
     void** adr = (void**)((unsigned long)ptr + i);
     unsigned char* byte = (unsigned char*)((unsigned long)ptr + i);
 
     printf("%0*lx\t", S*2, (unsigned long)ptr + i); /* address */
-      
+
     if ((i % S) == 0)
       /* seems we're actually forbidden to read unaligned adresses */
       printf("%0*lx\t", S*2, (unsigned long)*adr); /* content interpreted as address */
     else
       printf("%*c\t", S*2, ' '); /* fill */
-        
+
     if(*byte >= 32 && *byte < 127)
       printf("%c\n", *byte); /* content interpreted as character */
     else
       printf("\\%o\n", *byte);
-    
+
     if ((i % S) == 0)
       printf("----------------------------------------------------------------\n");
   }
@@ -192,7 +192,7 @@ void* setup_main_stack(const char* command_line, void* stack_top)
   char* cmd_line_on_stack;
   char* ptr_save;
   int i = 0;
-  
+
 
   /* calculate the bytes needed to store the command_line */
   line_size = YOUR_CODE_HERE;
@@ -209,24 +209,24 @@ void* setup_main_stack(const char* command_line, void* stack_top)
   /* calculate the size needed on our simulated stack */
   total_size = YOUR_CODE_HERE;
   STACK_DEBUG("# total_size = %d\n", total_size);
-  
+
 
   /* calculate where the final stack top will be located */
   esp = YOUR_CODE_HERE;
-  
+
   /* setup return address and argument count */
   esp->ret = YOUR_CODE_HERE;
   esp->argc = YOUR_CODE_HERE;
   /* calculate where in the memory the argv array starts */
   esp->argv = YOUR_CODE_HERE;
-  
+
   /* calculate where in the memory the words is stored */
   cmd_line_on_stack = YOUR_CODE_HERE;
 
   /* copy the command_line to where it should be in the stack */
 
   /* build argv array and insert null-characters after each word */
-  
+
   return esp; /* the new stack top */
 }
 
@@ -241,11 +241,11 @@ int main()
   void* simulated_stack_top = (void*)((unsigned long)simulated_stack + 4096);
   int i;
   const int S = sizeof(void*);
-  
+
   /* read one line of input, this will be the command-line */
   printf("Enter a command line: ");
   custom_getline(line, LINE_SIZE);
-  
+
   /* put initial content on our simulated stack */
   esp = setup_main_stack(line, simulated_stack_top);
   printf("# esp = %0*lx\n", 2*S, (unsigned long)esp);
@@ -256,14 +256,14 @@ int main()
     printf("# ERROR: esp is not inside the allocated stack\n");
     return 1;
   }
-  
+
   /* dump memory area for verification */
   dump(esp, (char*)simulated_stack_top - (char*)esp);
-  
+
   /* original command-line should not be needed anymore */
   for (i = 0; i < LINE_SIZE; ++i)
     line[i] = (char)0xCC;
-  
+
   /* print the argument vector to see if it worked */
   for (i = 0; i < esp->argc; ++i)
   {
@@ -272,6 +272,6 @@ int main()
   printf("argv[%d] = %p\n", i, esp->argv[i]);
 
   free(simulated_stack);
-  
+
   return 0;
 }

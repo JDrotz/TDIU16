@@ -25,7 +25,7 @@ list_dir (const char *dir, bool verbose)
 
   if (isdir (dir_fd))
     {
-      char name[READDIR_MAX_LEN];
+      char name[READDIR_MAX_LEN + 1];
 
       printf ("%s", dir);
       if (verbose)

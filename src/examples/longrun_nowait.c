@@ -33,6 +33,7 @@
 #include <syscall.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "sleep.h"
 
 #define MAX_SIMULTANEOUS 50
 #define MAX_REPEAT 1000
@@ -54,6 +55,9 @@ int main(int argc, char* argv[])
       );
     return -1;
   }
+
+  /* emit error message early if sleep is missing */
+  sleep(1);
 
   simul = atoi(argv[1]);
   repeat = atoi(argv[2]);
@@ -77,8 +81,8 @@ int main(int argc, char* argv[])
 
   for (j = 0; j < repeat; ++j)
   {
-    /* you may have to increase the multiple to more than 5 */
-    int ticks = 10 * 1000 * 1000 * j / repeat;
+    /* experiment with different values to see different behaviors!  */
+    int max_sleep_ms = 1000;
 
     snprintf(cmd, BUF_SIZE, "generic_parent %s %i %i", "dummy", j*simul, simul);
 
@@ -87,9 +91,11 @@ int main(int argc, char* argv[])
 //    plist();
 
     /* since we do not have the wait systemcall yet */
-    printf("Now entering busy-loop to let some processes finish\n");
-    while (ticks--)
-      ;
+    int sleep_time = max_sleep_ms * j / repeat;
+    printf("Now calling sleep(%d) to let some processes finish\n", sleep_time);
+    sleep(sleep_time);
+
+//    plist();
   }
   return 0;
 }

@@ -7,21 +7,17 @@
 #include <stdio.h>
 #include <syscall.h>
 
+void sleep(int);
 
-// !!! Remove/comment this line when you have implemented sleep() !!!
-#define NO_SLEEP_YET
-
-
-// If we don't have sleep yet, provide a small macro that prevents compilation errors.
-#ifdef NO_SLEEP_YET
-#define sleep(x)                                                        \
-    do {                                                                \
-        printf("---------------------\n"								\
-			"You can not run this program before you have implemented the\n"	\
-            "system call sleep(). If you have implemented sleep(), remove the line\n" \
-            "  #define NO_SLEEP_YET\n"									\
-            "in the file examples/sleep.h and re-compile examples.\n"	\
-			"---------------------\n");									\
-        exit(-1);                                                       \
-    } while (false);
-#endif
+__attribute__((weak))
+void sleep(int ms)
+{
+  (void)ms; /* to avoid warning */
+  printf("---------------------\n"
+         "You can not run this program before you have implemented\n"
+         "the system call sleep()\n"
+         "When you have implemented sleep(), you need to re-compile\n"
+         "the examples directory (make -C ../examples)\n"
+         "---------------------\n");
+  exit(999);
+}

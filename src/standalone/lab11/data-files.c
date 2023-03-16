@@ -35,7 +35,7 @@ struct data_file *data_open(int file) {
   if (result == NULL) {
     // Skapa en ny data_file.
     result = malloc(sizeof(struct data_file));
-    result->open_count = 0;
+    result->open_count = 1;
     result->id = file;
 
     // Simulera att vi läser in data...
@@ -47,9 +47,10 @@ struct data_file *data_open(int file) {
 
     // Spara data i "open_files".
     open_files[file] = result;
+  } else {
+    // Se till att datafilen behöver öppnas igen.
+    data_reopen(result);
   }
-
-  result->open_count++;
 
   return result;
 }
@@ -57,9 +58,7 @@ struct data_file *data_open(int file) {
 // Öppna en datafil som redan är öppen, så att den kan ges vidare till en annan
 // del av systemet som kör close senare.
 void data_reopen(struct data_file *file) {
-  lock_acquire(&file->llock);
   file->open_count++;
-  lock_release(&file->llock);
 }
 
 // Stäng en datafil. Om ingen annan har filen öppen ska filen avallokeras för

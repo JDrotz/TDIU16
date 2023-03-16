@@ -47,7 +47,8 @@ struct test_case_t
 
 const struct test_case_t test_case[TEST_CASE_COUNT] =
 {
-  {(void*)100, 100}, /* one full page */
+  {(void*)100, 200}, /* one full page */
+  {(void*)100, 100},
   {(void*)199, 102},
   {(void*)101, 98},
   {(void*)250, 190},

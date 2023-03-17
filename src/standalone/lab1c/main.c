@@ -6,11 +6,15 @@
 
 /* Recommended compile commmand:
  *
- * gcc -Wall -Wextra -std=gnu99 -pedantic -g main.c map.c
+ * gcc -Wall -Wextra -std=gnu99 -pedantic -g main.c map.c -o main
+ *
+ * Run your code:
+ *
+ * ./main
  *
  * Recommended way to test your solution:
  *
- * valgrind --tool=memcheck ./a.out
+ * valgrind --tool=memcheck ./main
  */
 #error Read comments above, then remove this line.
 
@@ -25,7 +29,7 @@
 /* function passed as parameter to map_remove_if in order to free the
  * memory for all inseted values, and return true to remove them from
  * the map */
-bool do_free(key_t k UNUSED, value_t v, int aux UNUSED)
+bool do_free (key_t k UNUSED, value_t v, int aux UNUSED)
 {
   free(v);     /*! free memory */
   return true; /*  and remove from collection */
@@ -33,7 +37,7 @@ bool do_free(key_t k UNUSED, value_t v, int aux UNUSED)
 
 /* function to display all values in the map that are less than the
  * aux argument */
-void print_less(key_t k UNUSED, value_t v, int aux)
+void print_less (key_t k UNUSED, value_t v, int aux)
 {
   /* atoi converst from sequence of character to integer, it will fail
    * when the characters are letters, check the manpage to see how */
@@ -46,7 +50,7 @@ void print_less(key_t k UNUSED, value_t v, int aux)
 
 #define LOOPS 10
 
-char* my_strdup(char* str)
+char* my_strdup (char* str)
 {
   /*! calculate the length and add space for '\0' */
   int len = strlen(str) + 1;
@@ -58,7 +62,7 @@ char* my_strdup(char* str)
   return dst; /*(!) return our deep copy of str */
 }
 
-int main()
+int main (void)
 {
   struct map container;
   char input_buffer[10];

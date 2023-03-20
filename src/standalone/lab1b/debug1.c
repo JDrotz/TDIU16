@@ -1,0 +1,43 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include "memory.h"
+
+/* Recommended compile command:
+ *
+ * make debug1
+ *
+ * Run your code:
+ *
+ * ./debug1
+ *
+ * Debug with GDB:
+ *
+ * gdb -tui ./debug1
+ */
+
+
+int main(void)
+{
+  int values = 5;
+
+  // Detta är en array av pekare till heltal.
+  // Tänk: int *data[];
+  int **data = malloc(sizeof(int *) * 6);
+
+  // Fyll i data:
+  for (int i = 0; i < values; i++) {
+    int content = i * 5;
+    data[i] = &content;
+  }
+
+  // Skriv ut data:
+  for (int i = 0; i <= values; i++) {
+    int *pointer = data[i];
+    int value = *pointer;
+    printf("At %d: %d\n", i, value);
+  }
+
+  return 0;
+}

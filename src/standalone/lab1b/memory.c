@@ -38,8 +38,3 @@ void free(void *mem)
   struct alloc_info *info = (void *)((char *)mem - sizeof(struct alloc_info));
   munmap(info->page_base, info->alloc_size);
 }
-
-void check_compilation()
-{
-  /* to make sure code is compiled properly */
-}

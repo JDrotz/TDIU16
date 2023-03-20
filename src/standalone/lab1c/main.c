@@ -1,12 +1,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "map.h"
 
 /* Recommended compile commmand:
  *
- * gcc -Wall -Wextra -std=gnu99 -pedantic -g main.c map.c -o main
+ * - make main
+ *
+ * or
+ *
+ * - gcc -Wall -Wextra -std=gnu99 -pedantic -g main.c map.c -o main
  *
  * Run your code:
  *

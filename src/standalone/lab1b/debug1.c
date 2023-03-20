@@ -22,14 +22,17 @@ int main(void)
 {
   int values = 5;
 
+  // Detta är en vanlig array av heltal.
+  int *contents = malloc(sizeof(int *) * 6);
+
   // Detta är en array av pekare till heltal.
   // Tänk: int *data[];
   int **data = malloc(sizeof(int *) * 6);
 
   // Fyll i data:
   for (int i = 0; i < values; i++) {
-    int content = i * 5;
-    data[i] = &content;
+    contents[i] = i * 5;
+    data[i] = &contents[i];
   }
 
   // Skriv ut data:
@@ -38,6 +41,9 @@ int main(void)
     int value = *pointer;
     printf("At %d: %d\n", i, value);
   }
+
+  free(data);
+  free(contents);
 
   return 0;
 }

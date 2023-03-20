@@ -57,6 +57,7 @@ int main(void)
   int count = 12;
   int *numbers = create_numbers(count);
   print_with_header("First time:", numbers, count);
+  printf("\n");
 
   print_with_header("Second time:", numbers, count);
   free(numbers);

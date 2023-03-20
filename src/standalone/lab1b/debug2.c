@@ -54,7 +54,7 @@ void print_with_header(const char *header, int *numbers, int count)
 
 int main(void)
 {
-  int count = 8;
+  int count = 12;
   int *numbers = create_numbers(count);
   print_with_header("First time:", numbers, count);
 

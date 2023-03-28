@@ -60,7 +60,7 @@ char* my_strdup (char* str)
   /*! calculate the length and add space for '\0' */
   int len = strlen(str) + 1;
   /*! allocate memory just large enough */
-  char* dst = (char*)malloc(len);
+  char* dst = malloc(len);
   /*! copy all characters in src to dst */
   strncpy(dst, str, len);
 

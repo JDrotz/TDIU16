@@ -32,10 +32,12 @@ char *my_strdup(const char *original)
 int main(void)
 {
   const char *original = "Strings in C are fun!";
-  const char *copy = my_strdup(original);
+  char *copy = my_strdup(original);
 
   printf("Original: %s\n", original);
   printf("Copy:     %s\n", copy);
+
+  free(copy);
 
   return 0;
 }

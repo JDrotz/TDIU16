@@ -43,7 +43,7 @@ struct test_case_t
   unsigned length;
 };
 
-#define TEST_CASE_COUNT 6
+#define TEST_CASE_COUNT 7
 
 const struct test_case_t test_case[TEST_CASE_COUNT] =
 {

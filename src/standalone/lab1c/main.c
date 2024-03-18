@@ -40,6 +40,12 @@ bool do_free (key_t k UNUSED, value_t v, int aux UNUSED)
   return true; /*  and remove from collection */
 }
 
+/* function to display all values in the map */
+void print_all (key_t k UNUSED, value_t v, int aux UNUSED)
+{
+  printf("%s ", v);
+}
+
 /* function to display all values in the map that are less than the
  * aux argument */
 void print_less (key_t k UNUSED, value_t v, int aux)
@@ -128,6 +134,10 @@ YOUR CODE
 
   /*! free all remaining memory and remove from map */
   map_remove_if(&container, do_free, 0);
+
+  /*! print the contents of the map, to make sure it is now empty */
+  print("Will now display all values. The map should be empty now!\n");
+  map_for_each(&container, print_all, 0);
 
   return 0;
 }

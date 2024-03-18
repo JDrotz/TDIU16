@@ -131,6 +131,7 @@ YOUR CODE
   printf("Will now display all values less than N. Choose N: ");
   scanf("%d", &i);
   map_for_each(&container, print_less, i);
+  printf("\n");
 
   /*! free all remaining memory and remove from map */
   map_remove_if(&container, do_free, 0);
@@ -138,6 +139,7 @@ YOUR CODE
   /*! print the contents of the map, to make sure it is now empty */
   printf("Will now display all values. The map should be empty now!\n");
   map_for_each(&container, print_all, 0);
+  printf("\n");
 
   return 0;
 }

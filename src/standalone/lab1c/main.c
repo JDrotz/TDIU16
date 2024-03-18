@@ -136,7 +136,7 @@ YOUR CODE
   map_remove_if(&container, do_free, 0);
 
   /*! print the contents of the map, to make sure it is now empty */
-  print("Will now display all values. The map should be empty now!\n");
+  printf("Will now display all values. The map should be empty now!\n");
   map_for_each(&container, print_all, 0);
 
   return 0;

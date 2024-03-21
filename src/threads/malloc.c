@@ -466,6 +466,36 @@ free_block (struct block *b)
 }
 
 void
+not_a_leak (void *alloc)
+{
+  struct block *b = alloc_to_block(alloc);
+
+  lock_acquire(&alloc_list_lock);
+
+  // Check if we tracked this allocation:
+  if (b->header.alloc_list.next && b->header.alloc_list.prev) {
+    // Allocations that we have free'd point to themselves, check for that and report:
+    if (b->header.alloc_list.next == &b->header.alloc_list) {
+      // Temporarily disable leak detection.
+      bool old_record_leaks = record_leaks;
+      record_leaks = false;
+
+      printf("ERROR: Trying to mark deleted memory %p as not a leak!\n", alloc);
+
+      record_leaks = old_record_leaks;
+    } else {
+      list_remove(&b->header.alloc_list);
+    }
+  }
+
+  lock_release(&alloc_list_lock);
+
+  // Mark it so that we don't try to unlink it again.
+  b->header.alloc_list.next = NULL;
+  b->header.alloc_list.prev = NULL;
+}
+
+void
 malloc_enable_leak_check (void) {
   record_leaks = true;
 }
@@ -509,13 +539,21 @@ malloc_check_leaks (void) {
 #else
 
 static void
-init_block (struct block *b) {
+init_block (struct block *b)
+{
   (void)b;
 }
 
 static void
-free_block (struct block *b) {
+free_block (struct block *b)
+{
   (void)b;
+}
+
+static void
+not_a_leak (void *alloc)
+{
+  (void)alloc;
 }
 
 #endif

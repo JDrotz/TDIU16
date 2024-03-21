@@ -23,4 +23,7 @@ void malloc_enable_leak_check (void);
 void malloc_check_leaks (void);
 #endif
 
+/* Tell the system that a particular allocation is not a memory leak */
+void not_a_leak (void *);
+
 #endif /* threads/malloc.h */

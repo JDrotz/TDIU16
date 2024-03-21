@@ -34,38 +34,73 @@
    with the page allocator and sticking the allocation size at
    the beginning of the allocated block's arena header. */
 
+/* Remove leak check aliases. */
+#ifdef malloc
+#undef malloc
+#endif
+
+#ifdef realloc
+#undef realloc
+#endif
+
 /* Descriptor. */
 struct desc
-  {
-    size_t block_size;          /* Size of each element in bytes. */
-    size_t blocks_per_arena;    /* Number of blocks in an arena. */
-    struct list free_list;      /* List of free blocks. */
-    struct lock lock;           /* Lock. */
-  };
+{
+  size_t block_size;          /* Size of each element in bytes. */
+  size_t blocks_per_arena;    /* Number of blocks in an arena. */
+  struct list free_list;      /* List of free blocks. */
+  struct lock lock;           /* Lock. */
+};
 
 /* Magic number for detecting arena corruption. */
 #define ARENA_MAGIC 0x9a548eed
 
 /* Arena. */
 struct arena
-  {
-    unsigned magic;             /* Always set to ARENA_MAGIC. */
-    struct desc *desc;          /* Owning descriptor, null for big block. */
-    size_t free_cnt;            /* Free blocks; pages in big block. */
-  };
+{
+  unsigned magic;             /* Always set to ARENA_MAGIC. */
+  struct desc *desc;          /* Owning descriptor, null for big block. */
+  size_t free_cnt;            /* Free blocks; pages in big block. */
+};
 
-/* Free block. */
+/* Block header for leak-checking. */
+struct block_header
+{
+  struct list_elem alloc_list; /* List element for all allocations. */
+};
+
+/* A single allocated block. */
 struct block
-  {
-    struct list_elem free_elem; /* Free list element. */
-  };
+{
+#ifdef LEAKCHECK
+  struct block_header header; /* Header of the block, for leak checking. */
+#endif
+  struct list_elem free_elem; /* Free list element, only used for free blocks.
+                               * Otherwise, the start of the actual allocation.
+                               * Must be the last member.*/
+};
+
+/* Size of the block header - we don't use sizeof to allow the size to be zero. */
+static const size_t header_size = offsetof (struct block, free_elem);
 
 /* Our set of descriptors. */
 static struct desc descs[10];   /* Descriptors. */
 static size_t desc_cnt;         /* Number of descriptors. */
 
+#ifdef LEAKCHECK
+/* Data structures for checking for memory leaks. */
+static struct list alloc_list;
+static struct lock alloc_list_lock;
+#endif
+
 static struct arena *block_to_arena (struct block *);
 static struct block *arena_to_block (struct arena *, size_t idx);
+
+static void *block_to_alloc (struct block *);
+static struct block *alloc_to_block (void *);
+
+static void init_block (struct block *);
+static void free_block (struct block *);
 
 /* Initializes the malloc() descriptors. */
 void
@@ -82,6 +117,11 @@ malloc_init (void)
       list_init (&d->free_list);
       lock_init (&d->lock);
     }
+
+#ifdef LEAKCHECK
+  list_init(&alloc_list);
+  lock_init(&alloc_list_lock);
+#endif
 }
 
 /* Obtains and returns a new block of at least SIZE bytes.
@@ -96,6 +136,9 @@ malloc (size_t size)
   /* A null pointer satisfies a request for 0 bytes. */
   if (size == 0)
     return NULL;
+
+  /* Account for any additional memory that is required by the block itself. */
+  size += header_size;
 
   /* Find the smallest descriptor that satisfies a SIZE-byte
      request. */
@@ -116,7 +159,9 @@ malloc (size_t size)
       a->magic = ARENA_MAGIC;
       a->desc = NULL;
       a->free_cnt = page_cnt;
-      return a + 1;
+      b = (struct block *)(a + 1);
+      init_block (b);
+      return block_to_alloc (b);
     }
 
   lock_acquire (&d->lock);
@@ -150,7 +195,9 @@ malloc (size_t size)
   a = block_to_arena (b);
   a->free_cnt--;
   lock_release (&d->lock);
-  return b;
+
+  init_block (b);
+  return block_to_alloc (b);
 }
 
 /* Allocates and return A times B bytes initialized to zeroes.
@@ -176,10 +223,9 @@ calloc (size_t a, size_t b)
 
 /* Returns the number of bytes allocated for BLOCK. */
 static size_t
-block_size (void *block)
+block_size (struct block *block)
 {
-  struct block *b = block;
-  struct arena *a = block_to_arena (b);
+  struct arena *a = block_to_arena (block);
   struct desc *d = a->desc;
 
   return d != NULL ? d->block_size : PGSIZE * a->free_cnt - pg_ofs (block);
@@ -204,7 +250,7 @@ realloc (void *old_block, size_t new_size)
       void *new_block = malloc (new_size);
       if (old_block != NULL && new_block != NULL)
         {
-          size_t old_size = block_size (old_block);
+          size_t old_size = block_size (alloc_to_block (old_block)) - header_size;
           size_t min_size = new_size < old_size ? new_size : old_size;
           memcpy (new_block, old_block, min_size);
           free (old_block);
@@ -220,9 +266,11 @@ free (void *p)
 {
   if (p != NULL)
     {
-      struct block *b = p;
+      struct block *b = alloc_to_block(p);
       struct arena *a = block_to_arena (b);
       struct desc *d = a->desc;
+
+      free_block (b);
 
       if (d != NULL)
         {
@@ -230,7 +278,7 @@ free (void *p)
 
 #ifndef NDEBUG
           /* Clear the block to help detect use-after-free bugs. */
-          memset (b, 0xcc, d->block_size);
+          memset (p, 0xcc, d->block_size - header_size);
 #endif
 
           lock_acquire (&d->lock);
@@ -292,3 +340,183 @@ arena_to_block (struct arena *a, size_t idx)
                            + sizeof *a
                            + idx * a->desc->block_size);
 }
+
+/* Returns the offset into a block that should be returned from malloc. */
+static void *
+block_to_alloc (struct block *b)
+{
+  return &b->free_elem;
+}
+
+/* Returns the block of an allocation. */
+static struct block *
+alloc_to_block (void *alloc)
+{
+  return (struct block *) ((uint8_t *)alloc - header_size);
+}
+
+#ifdef LEAKCHECK
+
+static bool record_leaks = false;
+static struct list_elem freed_marker;
+
+/* Version of malloc that adds some metadata. */
+void *
+malloc_check (size_t size, const char *location)
+{
+  if (!record_leaks)
+    return malloc(size);
+
+  // Add space for "location".
+  size_t location_size = strlen(location);
+  void *allocated = malloc(size + location_size + 2);
+
+  lock_acquire(&alloc_list_lock);
+
+  // Add the block to our list of allocations.
+  struct block *block = alloc_to_block(allocated);
+  list_push_back(&alloc_list, &block->header.alloc_list);
+
+  // Store the location at the end of the allocation.
+  char *loc_start = (char *)allocated + (block_size(block) - header_size - location_size - 2);
+  loc_start[0] = '\0';
+  memcpy(loc_start + 1, location, location_size + 1);
+
+  lock_release(&alloc_list_lock);
+
+  return allocated;
+}
+
+/* Find metadata from "malloc_check" */
+static char *
+find_location (struct block *block)
+{
+  char *alloc_start = block_to_alloc(block);
+  size_t alloc_size = block_size(block) - header_size;
+
+  // Loop from the end until we find a null byte:
+  char *pos = alloc_start + alloc_size - 2;
+  while (pos > alloc_start) {
+    if (pos[-1] == '\0')
+      return pos;
+    pos--;
+  }
+
+  // Not found, nothing to print.
+  return NULL;
+}
+
+void *
+realloc_check (void *old_block, size_t new_size, const char *location)
+{
+  if (new_size == 0)
+    {
+      free (old_block);
+      return NULL;
+    }
+  else
+    {
+      void *new_block = malloc_check (new_size, location);
+      if (old_block != NULL && new_block != NULL)
+        {
+          // Note: When growing blocks, this will copy the location from the old
+          // allocation as well. This is fine, as we make sure to never overwrite
+          // the one placed by malloc!
+          size_t old_size = block_size (alloc_to_block (old_block)) - header_size;
+          size_t min_size = new_size < old_size ? new_size : old_size;
+          memcpy (new_block, old_block, min_size);
+          free (old_block);
+        }
+      return new_block;
+    }
+}
+
+static void
+init_block (struct block *b)
+{
+  b->header.alloc_list.prev = NULL;
+  b->header.alloc_list.next = NULL;
+}
+
+static void
+free_block (struct block *b)
+{
+  lock_acquire(&alloc_list_lock);
+
+  // Check if we tracked this allocation:
+  if (b->header.alloc_list.next && b->header.alloc_list.prev) {
+    // Allocations that we have free'd point to themselves, check for that and report:
+    if (b->header.alloc_list.next == &b->header.alloc_list) {
+      // Temporarily disable leak detection.
+      bool old_record_leaks = record_leaks;
+      record_leaks = false;
+
+      printf("ERROR: Double free of address %p detected!\n", block_to_alloc(b));
+
+      record_leaks = old_record_leaks;
+    } else {
+      list_remove(&b->header.alloc_list);
+    }
+  }
+
+  lock_release(&alloc_list_lock);
+
+  // Mark it so we detect double free in the future.
+  b->header.alloc_list.next = &b->header.alloc_list;
+  b->header.alloc_list.prev = &b->header.alloc_list;
+}
+
+void
+malloc_enable_leak_check (void) {
+  record_leaks = true;
+}
+
+void
+malloc_check_leaks (void) {
+  lock_acquire(&alloc_list_lock);
+
+  // Disable leak checking, in case printf wishes to allocate memory.
+  bool old_record_leaks = record_leaks;
+  record_leaks = false;
+
+  if (list_empty(&alloc_list)) {
+    printf("# ----------------\n"
+           "# No memory leaks!\n"
+           "# ----------------\n");
+  } else {
+    printf("Memory leaks detected!\n------------------------------\n");
+
+    int count = 0;
+
+    for (struct list_elem *curr = list_begin(&alloc_list);
+         curr != list_end(&alloc_list);
+         curr = list_next(curr)) {
+
+      struct block *b = list_entry(curr, struct block, header.alloc_list);
+      printf("Memory leak detected:\n  Address: %p\n  Allocated in: %s\n",
+             block_to_alloc(b),
+             find_location(b));
+      count++;
+    }
+
+    printf("------------------------------\n%d leaks found\n", count);
+  }
+
+  record_leaks = old_record_leaks;
+
+  lock_release(&alloc_list_lock);
+}
+
+#else
+
+static void
+init_block (struct block *b) {
+  (void)b;
+}
+
+static void
+free_block (struct block *b) {
+  (void)b;
+}
+
+#endif

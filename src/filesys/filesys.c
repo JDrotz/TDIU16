@@ -38,6 +38,7 @@ void
 filesys_done (void)
 {
   free_map_close ();
+  free_map_destroy ();
 }
 
 /* Creates a file named NAME with the given INITIAL_SIZE.

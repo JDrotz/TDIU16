@@ -5,9 +5,22 @@
 #include <stddef.h>
 
 void malloc_init (void);
+
 void *malloc (size_t) __attribute__ ((malloc));
 void *calloc (size_t, size_t) __attribute__ ((malloc));
 void *realloc (void *, size_t);
 void free (void *);
+
+#ifdef LEAKCHECK
+/* Use custom version of malloc that contains source information */
+void *malloc_check (size_t, const char *) __attribute__ ((malloc));
+void *realloc_check (void *, size_t, const char *);
+#define malloc(size) malloc_check(size, __func__)
+#define realloc(alloc, size) realloc_check(alloc, size, __func__)
+
+/* Enable leak checking, and check for leaks */
+void malloc_enable_leak_check (void);
+void malloc_check_leaks (void);
+#endif
 
 #endif /* threads/malloc.h */

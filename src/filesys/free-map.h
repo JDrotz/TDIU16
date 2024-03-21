@@ -10,6 +10,7 @@ void free_map_read (void);
 void free_map_create (void);
 void free_map_open (void);
 void free_map_close (void);
+void free_map_destroy (void);
 
 bool free_map_allocate (size_t, disk_sector_t *);
 void free_map_release (disk_sector_t, size_t);

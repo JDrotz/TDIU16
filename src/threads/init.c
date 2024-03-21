@@ -60,6 +60,8 @@ static uint16_t init_timer_freq = 1000;
 int thread_create_limit = 0; /* infinite */
 /* -S: Execute kernel threads slowly */
 static bool slow_kernel_threads = false;
+/* -L: Check for memory leaks */
+static bool leak_check = false;
 
 static bool prevent_recursive_off = false;
 
@@ -106,6 +108,11 @@ main (void)
   palloc_init ();
   malloc_init ();
   paging_init ();
+
+#ifdef LEAKCHECK
+  if (leak_check)
+    malloc_enable_leak_check();
+#endif
 
   /* Segmentation. */
 #ifdef USERPROG
@@ -265,6 +272,8 @@ parse_options (char **argv)
         init_timer_freq = atoi (value);
       else if (!strcmp (name, "-S")) // filst@ida
         slow_kernel_threads = true;
+      else if (!strcmp (name, "-L")) // filst@ida
+        leak_check = true;
 #ifdef FILESYS
       else if (!strcmp (name, "-f"))
         format_filesys = true;
@@ -300,6 +309,7 @@ run_task (char **argv)
 #else
   run_test (task);
 #endif
+
   printf ("Execution of '%s' complete.\n", task);
 }
 
@@ -407,6 +417,16 @@ hard_power_off (void)
 
 #ifdef FILESYS
   filesys_done ();
+#endif
+
+#ifdef USERPROG
+  // If you allocate global memory somewhere, this is your chance to
+  // free it before the leak check runs.
+#endif
+
+#ifdef LEAKCHECK
+  if (leak_check)
+    malloc_check_leaks();
 #endif
 
   print_stats ();

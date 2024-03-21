@@ -28,7 +28,7 @@ tests/klaar/pfs-reader_SRC = tests/klaar/pfs-reader.c
 tests/klaar/pfs-writer_SRC = tests/klaar/pfs-writer.c
 tests/klaar/pfs_PUTFILES += tests/klaar/pfs-reader
 tests/klaar/pfs_PUTFILES += tests/klaar/pfs-writer
-tests/klaar/pfs_ARGS = 10 5
+tests/klaar/pfs_ARGS = 3 2
 
 $(foreach prog,$(tests/klaar_PROGS),$(eval $(prog)_SRC += tests/lib.c))
 

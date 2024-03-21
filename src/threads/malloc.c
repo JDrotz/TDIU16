@@ -358,7 +358,6 @@ alloc_to_block (void *alloc)
 #ifdef LEAKCHECK
 
 static bool record_leaks = false;
-static struct list_elem freed_marker;
 
 /* Version of malloc that adds some metadata. */
 void *
@@ -499,7 +498,7 @@ malloc_check_leaks (void) {
       count++;
     }
 
-    printf("------------------------------\n%d leaks found\n", count);
+    printf("------------------------------\n%d leak%s found\n", count, count > 1 ? "s" : "");
   }
 
   record_leaks = old_record_leaks;

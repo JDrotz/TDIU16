@@ -766,8 +766,14 @@ sub xsystem {
 	$cleanup = sub { $termios->setattr (0, &POSIX::TCSANOW); }
     }
 
+    # Previously, we only used a pipe when kill_on_failure was active.
+    # Since we wish to filter output to remove escape sequences from QEMU,
+    # we always use a pipe now. The variable is here to preserve the ability
+    # to skip pipes.
+    my ($use_pipe) = 1;
+
     # Create pipe for filtering output.
-    pipe (my $in, my $out) or die "pipe: $!\n" if $kill_on_failure;
+    pipe (my $in, my $out) or die "pipe: $!\n" if $use_pipe;
 
     my ($pid) = fork;
     if (!defined ($pid)) {
@@ -776,11 +782,11 @@ sub xsystem {
     } elsif (!$pid) {
 	# Running in child process.
 	dup2 (fileno ($out), STDOUT_FILENO) or die "dup2: $!\n"
-	  if $kill_on_failure;
+	  if $use_pipe;
 	exec_setitimer (@_);
     } else {
 	# Running in parent process.
-	close $out if $kill_on_failure;
+	close $out if $use_pipe;
 
 	my ($cause);
 	local $SIG{ALRM} = sub { timeout ($pid, $cause, $cleanup); };
@@ -788,7 +794,7 @@ sub xsystem {
 	local $SIG{TERM} = sub { relay_signal ($pid, "TERM", $cleanup); };
 	alarm ($timeout * get_load_average () + 1) if defined ($timeout);
 
-	if ($kill_on_failure) {
+	if ($use_pipe) {
 	    # Filter output.
 	    my ($buf) = "";
 	    my ($boots) = 0;
@@ -815,20 +821,22 @@ sub xsystem {
 		    local $_ = substr ($buf, 0, $idx + 1, '');
 		    if ($firstline) {
 			# SeaBIOS has a number of escape sequences here, remove them before printing the first line.
-			$_ =~ s/^.*SeaBIOS/SeaBIOS/g;
+			$_ =~ s/^\e.*SeaBIOS/SeaBIOS/g;
 			print;
 		    }
 		    $firstline = 0;
 		    next if defined ($cause);
-		    if (/(Kernel PANIC|User process ABORT)/ ) {
-			$cause = "\L$1\E";
-			alarm (5);
-		    } elsif (/Pintos booting/ && ++$boots > 1) {
-			$cause = "triple fault";
-			alarm (5);
-		    } elsif (/FAILED/) {
-			$cause = "test failure";
-			alarm (5);
+		    if ($kill_on_failure) {
+			if (/(Kernel PANIC|User process ABORT)/ ) {
+			    $cause = "\L$1\E";
+			    alarm (5);
+			} elsif (/Pintos booting/ && ++$boots > 1) {
+			    $cause = "triple fault";
+			    alarm (5);
+			} elsif (/FAILED/) {
+			    $cause = "test failure";
+			    alarm (5);
+			}
 		    }
 		}
 	    }

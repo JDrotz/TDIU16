@@ -308,7 +308,6 @@ void
 thread_exit (void)
 {
   ASSERT (!intr_context ());
-  DEBUG_thread_count_down();
 
 #ifdef USERPROG
   process_cleanup ();
@@ -316,6 +315,7 @@ thread_exit (void)
 
   /* Just set our status to dying and schedule another process.
      We will be destroyed during the call to schedule_tail(). */
+  DEBUG_thread_count_down();
   intr_disable ();
   thread_current ()->status = THREAD_DYING;
   schedule ();

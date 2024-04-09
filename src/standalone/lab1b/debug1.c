@@ -36,7 +36,7 @@ int main(void)
   }
 
   // Skriv ut data:
-  for (int i = 0; i <= values; i++) {
+  for (int i = 0; i < values; i++) {
     int *pointer = data[i];
     int value = *pointer;
     printf("At %d: %d\n", i, value);

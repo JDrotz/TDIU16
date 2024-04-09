@@ -14,14 +14,12 @@
 #include "userprog/process.h"
 #include "devices/input.h"
 
-static void syscall_handler (struct intr_frame *);
+static void syscall_handler(struct intr_frame *);
 
-void
-syscall_init (void)
+void syscall_init(void)
 {
-  intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
+  intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
-
 
 /* This array defined the number of arguments each syscall expects.
    For example, if you want to find out the number of arguments for
@@ -33,29 +31,209 @@ syscall_init (void)
    type, see `lib/syscall-nr.h'. Use them instead of numbers.
  */
 const int argc[] = {
-  /* basic calls */
-  0, 1, 1, 1, 2, 1, 1, 1, 3, 3, 2, 1, 1,
-  /* not implemented */
-  2, 1,    1, 1, 2, 1, 1,
-  /* extended, you may need to change the order of these two (plist, sleep) */
-  0, 1
-};
+    /* basic calls */
+    0, 1, 1, 1, 2, 1, 1, 1, 3, 3, 2, 1, 1,
+    /* not implemented */
+    2, 1, 1, 1, 2, 1, 1,
+    /* extended, you may need to change the order of these two (plist, sleep) */
+    0, 1};
+
+void sys_exit(int status)
+{
+  process_exit(status);
+  thread_exit();
+}
 
 static void
-syscall_handler (struct intr_frame *f)
+syscall_handler(struct intr_frame *f)
 {
-  int32_t* esp = (int32_t*)f->esp;
+  int32_t *esp = (int32_t *)f->esp;
 
-  switch ( 0 /* retrive syscall number */ )
+  switch (esp[0] /* retrive syscall number */)
   {
-    default:
+  case SYS_HALT:
+  {
+    power_off();
+    break;
+  }
+
+  case SYS_EXIT:
+  {
+    sys_exit(esp[1]);
+    break;
+  }
+
+  case SYS_CREATE:
+  {
+    // 1an är filnamn och 2an är fil storlek enl. anrop
+    // (denna returnar alltså en bool från filesys_create)
+    f->eax = filesys_create((char *)esp[1], esp[2]);
+    break;
+  }
+
+  case SYS_OPEN:
+  {
+    char *file_name = (char *)esp[1];
+
+    if (file_name == NULL)
+      sys_exit(-1);
+
+    struct file *file = filesys_open(file_name);
+
+    if (file == NULL)
     {
-      printf ("Executed an unknown system call!\n");
-
-      printf ("Stack top + 0: %d\n", esp[0]);
-      printf ("Stack top + 1: %d\n", esp[1]);
-
-      thread_exit ();
+      f->eax = -1;
+      return;
     }
+
+    int fd = map_insert(&(thread_current()->open_file_table), file);
+    f->eax = fd;
+
+    return;
+  }
+
+  case SYS_REMOVE:
+  {
+    // returnerar likt create en bool om den lyckats
+    f->eax = filesys_remove((char *)esp[1]);
+    break;
+  }
+
+  case SYS_CLOSE:
+  {
+    filesys_close((struct file *)map_find(&thread_current()->open_file_table, esp[1]));
+
+    map_remove(&thread_current()->open_file_table, esp[1]);
+    break;
+  }
+
+  case SYS_FILESIZE:
+  {
+    struct file *fil = (struct file *)map_find(&(thread_current()->open_file_table), esp[1]);
+    if (fil == NULL)
+    {
+      f->eax = -1;
+      break;
+    }
+
+    f->eax = file_length(fil);
+    break;
+  }
+
+  case SYS_SEEK:
+  {
+    struct file *file = (struct file *)map_find(&(thread_current()->open_file_table), esp[1]);
+    int offset = (int)esp[2];
+
+    if (file != NULL && file_length(file) < offset)
+      file_seek(file, file_length(file));
+    else if (file != NULL)
+      file_seek(file, offset);
+    else
+    {
+      f->eax = -1;
+    }
+    f->eax = esp[1];
+    break;
+  }
+
+  case SYS_TELL:
+  {
+    struct file *file = (struct file *)map_find(&(thread_current()->open_file_table), esp[1]);
+    if (file == NULL)
+    {
+      f->eax = -1;
+      break;
+    }
+
+    f->eax = file_tell(file);
+    break;
+  }
+
+  case SYS_READ: // 8
+  {
+    int fd = esp[1];
+    char *buf = (char *)esp[2];
+    int length = esp[3];
+    int read = 0;
+
+    if (fd == STDOUT_FILENO || buf == NULL)
+    {
+      f->eax = -1;
+      return;
+    }
+    else if (fd == STDIN_FILENO)
+    {
+
+      for (int i = 0; i < length; i++)
+      {
+        buf[i] = input_getc();
+
+        if (buf[i] == '\r')
+          buf[i] = '\n';
+        putbuf(&buf[i], 1);
+        read++;
+      }
+      if (read == length)
+        f->eax = length;
+      else
+        f->eax = -1;
+      break;
+    }
+    else // to file
+    {
+      struct file *temp = (struct file *)map_find(&(thread_current()->open_file_table), fd);
+      if (temp == NULL)
+      {
+        f->eax = -1;
+        return;
+      }
+      f->eax = file_read(temp, buf, read);
+    }
+    break;
+  }
+
+  case SYS_WRITE:
+  {
+    int fd = esp[1];
+    char *buffer = (char *)esp[2];
+    int length = esp[3];
+
+    if (buffer == NULL || fd == STDIN_FILENO)
+    {
+      f->eax = -1;
+      return;
+    }
+
+    // om utskrift till skrärm
+    if (fd == STDOUT_FILENO)
+    {
+      putbuf(buffer, esp[3]);
+      f->eax = length;
+    }
+
+    else // to file
+    {
+      // printf("buffer=%s\n", buffer);
+
+      struct file *temp = (struct file *)map_find(&thread_current()->open_file_table, fd);
+      if (temp == NULL || buffer == NULL)
+      {
+        f->eax = -1;
+        return;
+      }
+      f->eax = file_write(temp, (void *)buffer, length);
+    }
+    return;
+  }
+  default:
+  {
+    printf("Executed an unknown system call!\n");
+
+    printf("Stack top + 0: %d\n", esp[0]);
+    printf("Stack top + 1: %d\n", esp[1]);
+
+    thread_exit();
+  }
   }
 }

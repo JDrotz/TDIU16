@@ -18,6 +18,7 @@
 #include "threads/synch.h"
 #include "threads/malloc.h"
 #include "lib/kernel/list.h"
+#include "filesys/filesys.h"
 
 #include "userprog/flist.h"
 #include "userprog/plist.h"
@@ -238,8 +239,14 @@ void process_cleanup(void)
     */
    printf("%s: exit(%d)\n", thread_name(), status);
 
+   for (int i = 0; i < MAP_SIZE; i++)
+   {
+
+      file_close(map_remove(&(thread_current()->open_file_table), i));
+   }
+
    /* Destroy the current process's page directory and switch back
-      to the kernel-only page directory. */
+   to the kernel-only page directory. */
    if (pd != NULL)
    {
       /* Correct ordering here is crucial.  We must set

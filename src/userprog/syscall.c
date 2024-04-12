@@ -76,20 +76,26 @@ syscall_handler(struct intr_frame *f)
     char *file_name = (char *)esp[1];
 
     if (file_name == NULL)
+    {
       sys_exit(-1);
+      break;
+    }
 
     struct file *file = filesys_open(file_name);
 
     if (file == NULL)
     {
       f->eax = -1;
-      return;
+      break;
     }
 
     int fd = map_insert(&(thread_current()->open_file_table), file);
+    if (fd == -1)
+      filesys_close(file);
+    printf("%d\n", fd);
     f->eax = fd;
 
-    return;
+    break;
   }
 
   case SYS_REMOVE:
@@ -101,9 +107,14 @@ syscall_handler(struct intr_frame *f)
 
   case SYS_CLOSE:
   {
-    filesys_close((struct file *)map_find(&thread_current()->open_file_table, esp[1]));
-
-    map_remove(&thread_current()->open_file_table, esp[1]);
+    int fd = esp[1];
+    value_t file = map_find(&(thread_current()->open_file_table), fd);
+    if (file == NULL)
+    {
+      break;
+    }
+    filesys_close(file);
+    map_remove(&(thread_current()->open_file_table), fd);
     break;
   }
 
@@ -160,7 +171,7 @@ syscall_handler(struct intr_frame *f)
     if (fd == STDOUT_FILENO || buf == NULL)
     {
       f->eax = -1;
-      return;
+      break;
     }
     else if (fd == STDIN_FILENO)
     {
@@ -182,13 +193,13 @@ syscall_handler(struct intr_frame *f)
     }
     else // to file
     {
-      struct file *temp = (struct file *)map_find(&(thread_current()->open_file_table), fd);
+      struct file *temp = map_find(&(thread_current()->open_file_table), fd);
       if (temp == NULL)
       {
         f->eax = -1;
-        return;
+        break;
       }
-      f->eax = file_read(temp, buf, read);
+      f->eax = file_read(temp, buf, length);
     }
     break;
   }
@@ -214,7 +225,6 @@ syscall_handler(struct intr_frame *f)
 
     else // to file
     {
-      // printf("buffer=%s\n", buffer);
 
       struct file *temp = (struct file *)map_find(&thread_current()->open_file_table, fd);
       if (temp == NULL || buffer == NULL)

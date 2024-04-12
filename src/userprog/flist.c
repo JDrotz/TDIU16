@@ -4,42 +4,42 @@
 
 void map_init(struct map *map)
 {
-    for (int i = 2; i < MAP_SIZE; i++)
+    for (int i = 0; i < MAP_SIZE; i++)
         map->content[i] = NULL;
 }
 
 key_t map_insert(struct map *map, value_t value)
 {
     // default -1 (fail) om den inte ändras till en korrekt key i loopen
-    key_t key = -1;
-    for (int i = 2; i < MAP_SIZE; i++)
+    for (int i = 0; i < MAP_SIZE; i++)
     {
         if (map->content[i] == NULL)
         {
             map->content[i] = value;
-            key = i;
-            break;
+            return i + 2;
         }
     }
-    return key;
+    return -1;
 }
 
 value_t map_find(struct map *map, key_t key)
 {
-    if (map->content[key] != NULL)
-        return map->content[key];
-    return NULL;
+    if (key < 2 || key >= MAP_SIZE + 2)
+        return NULL;
+
+    return map->content[key - 2];
 }
 
 value_t map_remove(struct map *map, key_t key)
 {
-    value_t val = NULL;
-    if (map->content[key] != NULL)
-    {
-        val = map->content[key];
-        map->content[key] = NULL;
-    }
-    return val;
+    // value_t val = NULL;
+    if (key < 2 || key >= MAP_SIZE + 2)
+        return NULL;
+
+    struct file *temp = map->content[key - 2];
+    map->content[key - 2] = NULL;
+
+    return temp;
 }
 
 void map_for_each(struct map *m,

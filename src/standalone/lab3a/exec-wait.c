@@ -12,44 +12,49 @@ int do_work(int param);
  *
  * I Pintos motsvaras denna av "struct thread".
  */
-struct running_thread {
+struct running_thread
+{
   // Den parameter som ska skickas till "do_work".
   int param;
-
   // Om tråden är klar: Resultatet som "do_work" har beräknat.
+  struct semaphore sema;
   int result;
 };
 
 // Första funktionen som körs i nya trådar.
-void thread_main(struct running_thread *data) {
+void thread_main(struct running_thread *data)
+{
   data->result = do_work(data->param);
+  sema_up(&data->sema); // kör semma up när man är klar med "do work"
 }
 
 // Starta en ny tråd som kör funktionen "do_work" med "param" som
 // parameter. Returnerar en "struct running_thread" som sedan kan skickas till
 // "wait" för att få reda på resultatet. Systemanropen "exec" och "wait" ska
 // fungera på samma sätt i Pintos sedan.
-struct running_thread *exec(int param) {
+struct running_thread *exec(int param)
+{
   // Allokera en ny struktur för att hålla reda på tråden och initiera den.
   struct running_thread *data = malloc(sizeof(struct running_thread));
   data->param = param;
 
   // Skapa en ny tråd som kör "thread_main" och ge den tillgång till "data".
+  sema_init(&data->sema, 0);
   thread_new(&thread_main, data);
-
   return data;
 }
 
 // Vänta på att en tråd som startades med "exec" blir klar och hämta resultatet
 // från den. "wait" frigör också "data", så vi antar att "wait" bara anropas en
 // gång för varje anrop till "exec".
-int wait(struct running_thread *data) {
+int wait(struct running_thread *data)
+{
   // Hämta resultatet, frigör minnet och returnera resultatet.
+  sema_down(&data->sema); // semma down för att vänta på varje tråd
   int result = data->result;
   free(data);
   return result;
 }
-
 
 /**
  * Testprogram.
@@ -63,7 +68,8 @@ int wait(struct running_thread *data) {
 
 // Funktion som gör de tunga beräkningarna. Denna vill vi köra parallellt i
 // olika trådar.
-int do_work(int param) {
+int do_work(int param)
+{
   // Här sker tungt arbete...
   timer_msleep(param);
 
@@ -73,7 +79,8 @@ int do_work(int param) {
 
 // Main-funktion. Startar två extra trådar som anropar "do_work". Kör även
 // "do_work" i main-tråden.
-int main(void) {
+int main(void)
+{
   struct running_thread *a = exec(10);
   struct running_thread *b = exec(100);
 

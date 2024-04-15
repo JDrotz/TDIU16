@@ -157,8 +157,6 @@ int main(int argc, char *argv[])
     printf("Will try to reopen 'test.txt'\n");
     close(id);
     id = open("test.txt");
-    read(id, buffer, 8);
-    printf("%s\n", buffer);
 
     printf("Will try to read a sequence from '%d'\n", id);
     for (i = 0; i < 16; ++i)

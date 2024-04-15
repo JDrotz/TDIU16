@@ -17,7 +17,6 @@
  * gdb -tui ./debug2
  */
 
-
 // Skapa en array av tal.
 // Notera: denna typ av slump är inte särskilt bra, men
 // duger för vårt exempel.
@@ -36,7 +35,8 @@ int *create_numbers(int count)
 // Skriv ut en array av tal.
 void print_numbers(int *numbers, int count)
 {
-  for (int i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++)
+  {
     int number = numbers[i];
     printf("Number %d: %d\n", i, number);
   }
@@ -49,7 +49,7 @@ void print_with_header(const char *header, int *numbers, int count)
   printf("------------------\n");
 
   print_numbers(numbers, count);
-  free(numbers);
+  // free(numbers);
 }
 
 int main(void)

@@ -241,7 +241,6 @@ void process_cleanup(void)
 
    for (int i = 0; i < MAP_SIZE; i++)
    {
-
       file_close(map_remove(&(thread_current()->open_file_table), i));
    }
 

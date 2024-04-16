@@ -50,6 +50,10 @@ void process_print_list()
 struct parameters_to_start_process
 {
    char *command_line;
+   struct semaphore sem_ID;
+   bool process_status;
+   int process_id;
+   int parent_id;
 };
 
 static void
@@ -82,14 +86,33 @@ int process_execute(const char *command_line)
 
    strlcpy_first_word(debug_name, command_line, 64);
 
+   sema_init(&(arguments.sem_ID),0);
+   arguments.process_id = -1;
+
    /* SCHEDULES function `start_process' to run (LATER) */
    thread_id = thread_create(debug_name, PRI_DEFAULT,
                              (thread_func *)start_process, &arguments);
 
-   process_id = thread_id;
+   if(thread_id != TID_ERROR)
+   {
+   sema_down(&(arguments.sem_ID));
+   }
+   
+   if (thread_id == -1)  //om thread inte skapas sätter vi -1 
+   {
+      //returnerar process id -1
+      process_id = -1;
+   }   
+   
+   //väntar vi på process start, och sätter process id
+
+   if (!arguments.process_status)
+      process_id = -1;
+   else
+      process_id = arguments.process_id;
 
    /* AVOID bad stuff by turning off. YOU will fix this! */
-   power_off();
+   //power_off();
 
    /* WHICH thread may still be using this right now? */
    free(arguments.command_line);
@@ -159,6 +182,9 @@ start_process(struct parameters_to_start_process *parameters)
          for debug purposes. Disable the dump when it works. */
 
       //    dump_stack ( PHYS_BASE + 15, PHYS_BASE - if_.esp + 16 );
+      parameters->process_id = 50;
+      parameters->process_status = success;
+      sema_up(&(parameters->sem_ID));
    }
 
    debug("%s#%d: start_process(\"%s\") DONE\n",
@@ -174,6 +200,8 @@ start_process(struct parameters_to_start_process *parameters)
    */
    if (!success)
    {
+      parameters->process_id = -1;
+      sema_up(&(parameters->sem_ID));
       thread_exit();
    }
 
@@ -197,6 +225,7 @@ start_process(struct parameters_to_start_process *parameters)
    mechanism between parent and child is established. */
 int process_wait(int child_id)
 {
+   //printf("wogga boggga %d\n", child_id);
    int status = -1;
    struct thread *cur = thread_current();
 

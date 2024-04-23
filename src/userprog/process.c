@@ -26,10 +26,13 @@
 /* HACK defines code you must remove and implement in a proper way */
 #define HACK
 
+struct p_list process_table;
+
 /* This function is called at boot time (threads/init.c) to initialize
  * the process subsystem. */
 void process_init(void)
 {
+   plist_init(&process_table);
 }
 
 /* This function is currently never called. As thread_exit does not
@@ -39,6 +42,7 @@ void process_init(void)
  * from thread_exit - do not call cleanup twice! */
 void process_exit(int status UNUSED)
 {
+   plist_set_exit_status(&process_table, thread_current()->tid, status);
 }
 
 /* Print a list of all running processes. The list shall include all
@@ -74,6 +78,8 @@ int process_execute(const char *command_line)
 
    /* LOCAL variable will cease existence when function return! */
    struct parameters_to_start_process arguments;
+   arguments.parent_id = thread_current()->tid; //Ger processen en förälder. 
+                                                //Används senare i process table också
 
    debug("%s#%d: process_execute(\"%s\") ENTERED\n",
          thread_current()->name,
@@ -95,21 +101,14 @@ int process_execute(const char *command_line)
 
    if(thread_id != TID_ERROR)
    {
-   sema_down(&(arguments.sem_ID));
-   }
-   
-   if (thread_id == -1)  //om thread inte skapas sätter vi -1 
-   {
-      //returnerar process id -1
-      process_id = -1;
-   }   
-   
-   //väntar vi på process start, och sätter process id
-
-   if (!arguments.process_status)
-      process_id = -1;
-   else
-      process_id = arguments.process_id;
+      sema_down(&(arguments.sem_ID));
+      if (thread_id == -1 || !arguments.process_status)  //om thread inte skapas sätter vi -1 
+      {
+         //returnerar process id -1
+         process_id = -1;
+      }    
+      else //väntar vi på process start, och sätter process id
+         process_id = arguments.process_id;
 
    /* AVOID bad stuff by turning off. YOU will fix this! */
    //power_off();
@@ -121,6 +120,7 @@ int process_execute(const char *command_line)
          thread_current()->name,
          thread_current()->tid,
          command_line, process_id);
+   }
 
    /* MUST be -1 if `load' in `start_process' return false */
    return process_id;
@@ -140,6 +140,7 @@ start_process(struct parameters_to_start_process *parameters)
 
    char file_name[64];
    strlcpy_first_word(file_name, parameters->command_line, 64);
+   
 
    debug("%s#%d: start_process(\"%s\") ENTERED\n",
          thread_current()->name,
@@ -161,6 +162,14 @@ start_process(struct parameters_to_start_process *parameters)
 
    if (success)
    {
+      //skapar den nya processen här. ger den parent pid
+      //returnerar sedan unikt PID till parameter listan
+      
+      thread_current()->tid = plist_insert(&process_table, parameters->parent_id);
+      if (thread_current()->tid == -1)
+         success = false;
+      
+
       /* We managed to load the new program to a process, and have
          allocated memory for a process stack. The stack top is in
          if_.esp, now we must prepare and place the arguments to main on
@@ -180,17 +189,22 @@ start_process(struct parameters_to_start_process *parameters)
       /* The stack and stack pointer should be setup correct just before
          the process start, so this is the place to dump stack content
          for debug purposes. Disable the dump when it works. */
+      debug("%s#%d: start_process(\"%s\") DONE\n",
+      thread_current()->name,
+      thread_current()->tid,
+      parameters->command_line);
 
       //    dump_stack ( PHYS_BASE + 15, PHYS_BASE - if_.esp + 16 );
-      parameters->process_id = 50;
+      parameters->process_id = thread_current()->tid;
+      printf("\t PID blev: %i\n", parameters->process_id);
       parameters->process_status = success;
       sema_up(&(parameters->sem_ID));
    }
 
-   debug("%s#%d: start_process(\"%s\") DONE\n",
-         thread_current()->name,
-         thread_current()->tid,
-         parameters->command_line);
+   // debug("%s#%d: start_process(\"%s\") DONE\n",
+   //       thread_current()->name,
+   //       thread_current()->tid,
+   //       parameters->command_line);
 
    /* If load fail, quit. Load may fail for several reasons.
       Some simple examples:
@@ -233,8 +247,17 @@ int process_wait(int child_id)
          cur->name, cur->tid, child_id);
    /* Yes! You need to do something good here ! */
 
+   if(process_table.table[child_id].parent_pid == cur->tid && 
+      !process_table.table[child_id].waited &&
+      process_table.table[child_id].in_use)
+   {
+      status = plist_get_exit_status(&(process_table), child_id);
+   }
+
    debug("%s#%d: process_wait(%d) RETURNS %d\n",
          cur->name, cur->tid, child_id, status);
+
+   print_plist(&process_table);
 
    return status;
 }
@@ -251,11 +274,13 @@ int process_wait(int child_id)
    is detected.
 */
 
+
+//gör om så att man bara hämtar sin egen exit status. utan exit.
 void process_cleanup(void)
 {
    struct thread *cur = thread_current();
    uint32_t *pd = cur->pagedir;
-   int status = -1;
+   int status = self_status(&process_table, cur->tid);
 
    debug("%s#%d: process_cleanup() ENTERED\n", cur->name, cur->tid);
 
@@ -268,11 +293,25 @@ void process_cleanup(void)
     */
    printf("%s: exit(%d)\n", thread_name(), status);
 
+   if (process_table.table[cur->tid].in_use)
+   {
+      if (!process_table.table[cur->tid].parent_alive)
+         plist_remove(&process_table, cur->tid);
+      else
+      {
+         process_table.table[cur->tid].alive = false;
+         //gå igenom barn och sätt parent_alive = false
+         for (int i = 0 ; i < MAX_PLIST ; i++)
+            if (process_table.table[i].parent_pid == cur->tid)
+               process_table.table[i].parent_alive = false;
+      }
+   }
+   plist_clean(&process_table);
    for (int i = 0; i < MAP_SIZE; i++)
    {
       file_close(map_remove(&(thread_current()->open_file_table), i));
    }
-
+   
    /* Destroy the current process's page directory and switch back
    to the kernel-only page directory. */
    if (pd != NULL)

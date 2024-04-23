@@ -13,6 +13,7 @@
 #include "userprog/pagedir.h"
 #include "userprog/process.h"
 #include "devices/input.h"
+#include "devices/timer.h"
 
 static void syscall_handler(struct intr_frame *);
 
@@ -236,6 +237,31 @@ syscall_handler(struct intr_frame *f)
     }
     return;
   }
+  
+  case SYS_EXEC:
+  {
+    f->eax = process_execute((char*)esp[1]);
+    break;
+  }
+
+  case SYS_SLEEP:
+  {
+    timer_msleep((int)esp[1]);
+    break;
+  }
+
+  case SYS_PLIST:
+  {
+    process_print_list(); //kallar funktionen i plist. gör all implementering där!!!
+    break;
+  }
+  case SYS_WAIT:
+  {
+    f->eax = process_wait(esp[1]);
+    break;
+  }
+
+
   default:
   {
     printf("Executed an unknown system call!\n");

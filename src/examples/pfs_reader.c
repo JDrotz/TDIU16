@@ -22,7 +22,6 @@ int main(void)
     id = open("file.1");
     bytes = read(id, buffer, BIG);
     close(id);
-
     if (bytes != BIG)
     {
       write(messages, "Buffer not filled!\n", 19);
@@ -34,12 +33,13 @@ int main(void)
       if (buffer[0] != buffer[j])
       {
         /* Ooops, inconsistency */
-	write(messages, "INCONSISTENCY.", 14);
-	printf("INCONSISTENCY\n");
-	inconsistency = 1;
-	break; /* no need to check further */
+        write(messages, "INCONSISTENCY.", 14);
+        printf("INCONSISTENCY\n");
+        inconsistency = 1;
+        break; /* no need to check further */
       }
     }
+
     if (!inconsistency)
     {
       write(messages, "cool\n", 5);

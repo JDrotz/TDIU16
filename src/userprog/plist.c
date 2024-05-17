@@ -34,27 +34,14 @@ int plist_insert(struct p_list* list, int P_PID) //return PID
             list->table[i].parent_alive = true;
             list->table[i].parent_pid = P_PID;
             lock_release(&list->table[i].lock);
+            if (pid == P_PID)
+                list->table[i].parent_pid = 0;
+
             return pid;
         }
     }
     return pid;
 }
-
-// int plist_find(struct p_list *list, p_info *the_return, int PID) //return PID or -1 if not found
-// {
-//     int ret_pid = -1;
-//     lock_acquire(&list->table[PID].lock);
-
-//     if (list->table[PID].in_use)
-//         {
-//         the_return = &list->table[PID];
-//         ret_pid = PID;
-//         }
-
-//     lock_release(&list->table[PID].lock);
-//     return ret_pid;
-// }
-
 
 void plist_set_exit_status(p_list* list, int PID, int exit_status)
 {
@@ -62,7 +49,6 @@ void plist_set_exit_status(p_list* list, int PID, int exit_status)
     if(list->table[PID].in_use)
     {
         list->table[PID].exit_status = exit_status;
-        sema_up(&(list->table[PID].p_done));
     }
     lock_release(&list->table[PID].lock);
 }
@@ -126,5 +112,5 @@ void print_plist(p_list * list)
 {
     for(int i = 0;i < MAX_PLIST; i++)
         if(list->table[i].in_use)
-            printf("id:%i \tparent_pid:%i Alive:%i parent_alive:%i exit_status:%i waited:%i in_use:%i\n",i, list->table[i].parent_pid, list->table[i].alive, list->table[i].parent_alive, list->table[i].exit_status,list->table[i].waited ,list->table[i].in_use);
+            printf("# id:%i \tparent_pid:%i Alive:%i parent_alive:%i exit_status:%i waited:%i in_use:%i\n",i, list->table[i].parent_pid, list->table[i].alive, list->table[i].parent_alive, list->table[i].exit_status,list->table[i].waited ,list->table[i].in_use);
 }

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <syscall-nr.h>
 #include "userprog/syscall.h"
 #include "threads/interrupt.h"
@@ -17,10 +18,65 @@
 
 static void syscall_handler(struct intr_frame *);
 
+static bool verify_variable_length(char* start);
+static bool verify_fix_length(void* start, unsigned length);
+
 void syscall_init(void)
 {
   intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
+
+
+
+bool verify_variable_length(char* start)
+{
+  if (start == NULL)
+    return false;
+
+  if (is_kernel_vaddr(start))
+    return false;
+
+//kollar om start är valid
+  if(pagedir_get_page(thread_current()->pagedir, start) == NULL)
+    return false;
+ 
+  char *cur = start;
+  unsigned prev_pg = pg_no(cur);
+
+//kollar allt i adressen och upp till \0 tecken
+  while(*cur != '\0')
+  {
+    prev_pg = pg_no(cur++);
+    if(pg_no(cur) != prev_pg) //för att förhindra dupliceringar då pagedir_get_page är dyrt
+      if(pagedir_get_page(thread_current()->pagedir, cur) == NULL)
+        return false;
+  }
+
+  return true;
+}
+
+bool verify_fix_length(void* start, unsigned length)
+{
+  if (start == NULL)
+    return false;
+
+  if (is_kernel_vaddr(start))
+    return false;
+
+  char* temp = (char*)start;
+//loopar över alla adresser från start till length (-1), för att kunna validera dom
+//är någon av dom NULL, returnerar vi false
+  for (unsigned cur_page = pg_no(start); cur_page <= pg_no((void *)((int)start + length -1)); ++cur_page)
+  {
+    if (is_kernel_vaddr((void*)temp))
+      return false;
+    if (pagedir_get_page(thread_current()->pagedir, (void *)(cur_page * PGSIZE)) == NULL)
+      return false;
+    temp += PGSIZE;
+  }
+  return true;
+}
+
 
 /* This array defined the number of arguments each syscall expects.
    For example, if you want to find out the number of arguments for
@@ -50,6 +106,18 @@ syscall_handler(struct intr_frame *f)
 {
   int32_t *esp = (int32_t *)f->esp;
 
+  //verifierar från start till \0 som i standalone
+  if(!verify_fix_length((void*)esp,4))
+    sys_exit(-1);
+
+//fel antal calls (stack fel)
+  if(esp[0] > SYS_NUMBER_OF_CALLS)
+    sys_exit(-1);
+  
+  //verifierar från start till slut (start+length-1)
+  if(!verify_fix_length(esp, sizeof(char*) * (argc[esp[0]] + 1)))
+    sys_exit(-1);
+
   switch (esp[0] /* retrive syscall number */)
   {
   case SYS_HALT:
@@ -68,6 +136,14 @@ syscall_handler(struct intr_frame *f)
   {
     // 1an är filnamn och 2an är fil storlek enl. anrop
     // (denna returnar alltså en bool från filesys_create)
+
+    //om namn är null eller verify returnerar falskt
+    if ((char*)esp[1] == NULL || !verify_fix_length((char*)esp[1],esp[2]))
+    {
+      sys_exit(-1);
+      break;
+    }
+
     f->eax = filesys_create((char *)esp[1], esp[2]);
     break;
   }
@@ -75,6 +151,13 @@ syscall_handler(struct intr_frame *f)
   case SYS_OPEN:
   {
     char *file_name = (char *)esp[1];
+
+
+    if(file_name == NULL || !verify_variable_length(file_name))
+    {
+      sys_exit(-1);
+      break;
+    }
 
     if (file_name == NULL)
     {
@@ -93,7 +176,7 @@ syscall_handler(struct intr_frame *f)
     int fd = map_insert(&(thread_current()->open_file_table), file);
     if (fd == -1)
       filesys_close(file);
-    printf("%d\n", fd);
+    //printf("%d\n", fd);
     f->eax = fd;
 
     break;
@@ -169,6 +252,12 @@ syscall_handler(struct intr_frame *f)
     int length = esp[3];
     int read = 0;
 
+    if (!verify_fix_length(buf, length))
+      {
+        sys_exit(-1);
+        break;
+      }
+
     if (fd == STDOUT_FILENO || buf == NULL)
     {
       f->eax = -1;
@@ -211,6 +300,12 @@ syscall_handler(struct intr_frame *f)
     char *buffer = (char *)esp[2];
     int length = esp[3];
 
+    if (!verify_fix_length(buffer, length))
+    {
+      sys_exit(-1);
+      break;
+    }
+
     if (buffer == NULL || fd == STDIN_FILENO)
     {
       f->eax = -1;
@@ -240,6 +335,9 @@ syscall_handler(struct intr_frame *f)
   
   case SYS_EXEC:
   {
+    if (!verify_variable_length((char*)esp[1]))
+      thread_exit();
+
     f->eax = process_execute((char*)esp[1]);
     break;
   }

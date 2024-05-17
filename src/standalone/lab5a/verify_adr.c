@@ -18,13 +18,18 @@
  *
  *  gcc -Wall -Wextra -std=gnu99 -pedantic -m32 -g pagedir.o verify_adr.c
  */
-#error Read comment above and then remove this line.
+
 
 /* Verify all addresses from and including 'start' up to but excluding
  * (start+length). */
 bool verify_fix_length(void* start, unsigned length)
 {
-  // ADD YOUR CODE HERE
+//loopar över alla adresser från start till length (-1), för att kunna validera dom
+//är någon av dom NULL, returnerar vi false
+  for (unsigned cur_page = pg_no(start); cur_page <= pg_no((void *)((int)start + length -1)); ++cur_page)
+    if (pagedir_get_page(thread_current()->pagedir, (void *)(cur_page * PGSIZE)) == NULL)
+      return false;
+  return true;
 }
 
 /* Verify all addresses from and including 'start' up to and including
@@ -33,7 +38,24 @@ bool verify_fix_length(void* start, unsigned length)
  */
 bool verify_variable_length(char* start)
 {
-  // ADD YOUR CODE HERE
+
+//kollar om start är valid
+  if(pagedir_get_page(thread_current()->pagedir, start) == NULL)
+    return false;
+ 
+  char *cur = start;
+  unsigned prev_pg = pg_no(cur);
+
+//kollar allt i adressen och upp till \0 tecken
+  while(!is_end_of_string(cur))
+  {
+    prev_pg = pg_no(cur++);
+    if(pg_no(cur) != prev_pg) //för att förhindra dupliceringar då pagedir_get_page är dyrt
+      if(pagedir_get_page(thread_current()->pagedir, cur) == NULL)
+        return false;
+  }
+
+  return true;
 }
 
 /* Definition of test cases. */

@@ -78,8 +78,9 @@ int process_execute(const char *command_line)
 
    /* LOCAL variable will cease existence when function return! */
    struct parameters_to_start_process arguments;
-   arguments.parent_id = thread_current()->tid; //Ger processen en förälder. 
-                                                //Används senare i process table också
+   int id = thread_current()->tid;
+   arguments.parent_id = id; //Ger processen en förälder. 
+                              //Används senare i process table också
 
    debug("%s#%d: process_execute(\"%s\") ENTERED\n",
          thread_current()->name,
@@ -189,22 +190,17 @@ start_process(struct parameters_to_start_process *parameters)
       /* The stack and stack pointer should be setup correct just before
          the process start, so this is the place to dump stack content
          for debug purposes. Disable the dump when it works. */
-      debug("%s#%d: start_process(\"%s\") DONE\n",
-      thread_current()->name,
-      thread_current()->tid,
-      parameters->command_line);
 
       //    dump_stack ( PHYS_BASE + 15, PHYS_BASE - if_.esp + 16 );
       parameters->process_id = thread_current()->tid;
-      printf("\t PID blev: %i\n", parameters->process_id);
       parameters->process_status = success;
-      sema_up(&(parameters->sem_ID));
    }
 
-   // debug("%s#%d: start_process(\"%s\") DONE\n",
-   //       thread_current()->name,
-   //       thread_current()->tid,
-   //       parameters->command_line);
+   debug("%s#%d: start_process(\"%s\") DONE\n",
+         thread_current()->name,
+         thread_current()->tid,
+         parameters->command_line);
+      sema_up(&(parameters->sem_ID));
 
    /* If load fail, quit. Load may fail for several reasons.
       Some simple examples:
@@ -215,7 +211,7 @@ start_process(struct parameters_to_start_process *parameters)
    if (!success)
    {
       parameters->process_id = -1;
-      sema_up(&(parameters->sem_ID));
+      // sema_up(&(parameters->sem_ID));
       thread_exit();
    }
 
@@ -239,7 +235,6 @@ start_process(struct parameters_to_start_process *parameters)
    mechanism between parent and child is established. */
 int process_wait(int child_id)
 {
-   //printf("wogga boggga %d\n", child_id);
    int status = -1;
    struct thread *cur = thread_current();
 
@@ -247,9 +242,16 @@ int process_wait(int child_id)
          cur->name, cur->tid, child_id);
    /* Yes! You need to do something good here ! */
 
-   if(process_table.table[child_id].parent_pid == cur->tid && 
+   if (child_id > MAX_PLIST || child_id < 0)
+      return -1;
+
+   if(process_table.table[child_id].in_use == false)
+      return -1;
+
+   if((process_table.table[child_id].parent_pid == cur->tid && 
       !process_table.table[child_id].waited &&
-      process_table.table[child_id].in_use)
+      process_table.table[child_id].in_use) ||
+      process_table.table[child_id].parent_pid == 0)
    {
       status = plist_get_exit_status(&(process_table), child_id);
    }
@@ -257,7 +259,7 @@ int process_wait(int child_id)
    debug("%s#%d: process_wait(%d) RETURNS %d\n",
          cur->name, cur->tid, child_id, status);
 
-   print_plist(&process_table);
+   //print_plist(&process_table);
 
    return status;
 }
@@ -311,7 +313,7 @@ void process_cleanup(void)
    {
       file_close(map_remove(&(thread_current()->open_file_table), i));
    }
-   
+
    /* Destroy the current process's page directory and switch back
    to the kernel-only page directory. */
    if (pd != NULL)
@@ -329,6 +331,7 @@ void process_cleanup(void)
    }
    debug("%s#%d: process_cleanup() DONE with status %d\n",
          cur->name, cur->tid, status);
+   sema_up(&process_table.table[cur->tid].p_done);
 }
 
 /* Sets up the CPU for running user code in the current

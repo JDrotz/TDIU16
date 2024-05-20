@@ -1,0 +1,16 @@
+make: *** [../Makefile.kernel:10: check] Terminated
+make[1]: *** Deleting file 'tests/userprog/open-null.output'
+make[1]: *** Deleting file 'tests/userprog/open-empty.output'
+make[1]: *** Deleting file 'tests/userprog/open-boundary.output'
+make[1]: *** Deleting file 'tests/userprog/open-missing.output'
+make[1]: *** Deleting file 'tests/userprog/open-normal.output'
+make[1]: *** Deleting file 'tests/userprog/create-bound.output'
+make[1]: *** Deleting file 'tests/userprog/create-exists.output'
+make[1]: *** [../../tests/Make.tests:105: tests/klaar/pfs.output] Terminated
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/create-exists.output] Terminated
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/create-bound.output] Terminated
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/open-normal.output] Terminated
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/open-missing.output] Terminated
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/open-boundary.output] Terminated
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/open-empty.output] Terminated
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/open-null.output] Terminated

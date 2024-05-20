@@ -138,7 +138,7 @@ syscall_handler(struct intr_frame *f)
     // (denna returnar alltså en bool från filesys_create)
 
     //om namn är null eller verify returnerar falskt
-    if ((char*)esp[1] == NULL || !verify_fix_length((char*)esp[1],esp[2]))
+    if ((char*)esp[1] == NULL || !verify_variable_length((char*)esp[1]))
     {
       sys_exit(-1);
       break;
